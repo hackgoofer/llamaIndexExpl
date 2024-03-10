@@ -1,0 +1,63 @@
+ReAct LLMCompilerHotpotQA Question: Were Scott Derrickson and Ed W ood of the same nationality?
+LLM
+Thought: I need to search Scott Derrickson.
+Action: search(Scott  Derrickson)
+Search Tool
+Observation: … Scott Derrickson (born July 16, 1966) 
+is an American filmmaker …
+LLM
+Thought: I need to search Ed Wood.
+Action: search(Ed  Wood)Tool invocation
+Appended to prompt
+Search Tool
+Observation: … Edward Wood Jr was an American 
+filmmaker, actor, and ….Tool invocation
+Appended to prompt
+LLM
+Thought: They are both American filmmakers.
+Action: finish(yes)LLM Planner
+$1 = search(Scott  Derrickson)
+$2 = search(Ed  Wood)
+Parallel tool invocations
+Search Tool
+Observation: … Scott Derrickson (born July 
+16, 1966) is an American filmmaker …Search Tool
+Observation: … Edward Wood Jr was an 
+American filmmaker, actor, and …DAG of tasks
+ExecutorStep
+Latency Speedup: 1.8xLLM
+Thought: They are both American filmmakers.
+Action: finish(yes)
+Figure 1: An illustration of the runtime dynamics of LLMCompiler , in comparison with ReAct [65], given a sample
+question from the HotpotQA benchmark [61]. In LLMCompiler (Right), the Planner first decomposes the query into
+a Directed Acyclic Graph (DAG) comprising of several tasks with inter-dependencies. The Executor then in parallel
+executes multiple tasks, respecting their dependencies in the DAG. Finally, LLMCompiler joins all observations from
+the tool executions to produce the final response. In contrast, sequential tool execution of the existing frameworks like
+ReAct (Left) leads to longer execution latency. In this example, LLMCompiler attains a latency speedup of 1.8 ×
+on the HotpotQA benchmark. While a 2-way parallelizable question from HotpotQA is presented here for the sake of
+simple visual illustration, LLMCompiler is capable of managing tasks with more complex dependency structures, as
+further demonstrated in Figure 2 and Sec. 4.
+where the LLM calls a function, analyzes the outcomes, and then reasons about the next action, which may involve a
+subsequent function call. A simple example is illustrated in Figure 1 (Left), where the LLM is asked if Scott Derrickson
+and Ed Wood have the same nationality (example from HotPotQA dataset [61]). In this case, ReAct initially analyzes
+the query and decides to use a search tool to gather information about Scott Derrickson. The result of this search (i.e.,
+observation) is then concatenated back to the original prompt for the LLM to reason about the next action. Here, the
+LLM recognizes the need for further information about Ed Wood, invoking another use of the search tool. This new
+search result is also appended back to the prompt, enabling the LLM to arrive at the final answer.
+ReAct has been a pioneering work in enabling function calling, and it has been integrated into several frame-
+works [1, 37]. However, adapting this method for complex applications on a larger scale requires considerable op-
+timizations. This is due to the sequential execution behavior of ReAct, which serially executes function calls one
+by one and reasons about each observation before proceeding to the next. This approach, as well as the agent sys-
+tems [27, 64, 45, 46, 51] that adapt ReAct, may be inefficient in terms of latency and cost, particularly for complex
+applications that require many function calls. In particular, using ReAct’s sequential reasoning and action approach for
+these cases can lead to high latency and token consumption, since the results for each step need to be concatenated and
+sent back to the LLM for further reasoning, which may be unnecessary. Furthermore, while dynamically reasoning
+about the observations can be advantageous for certain cases, concatenating intermediate function results might affect
+the execution flow of the LLM, potentially reducing accuracy [60]. Common failure cases with such an approach
+can be repetitive generation of previous function calls, which is also highlighted in the original paper [65], and early
+stopping based on the partial intermediate results, as will be further discussed in Sec. 4.1.
+To address this challenge, we draw inspiration from classical compilers, where efficient instruction execution in
+traditional programming is a well-explored area. A key optimization technique in compilers involves the identifica-
+tion of instructions that can be executed in parallel and the effective management of their dependencies. Drawing
+inspiration from this concept, one can envision the need for a compiler tailored for LLM function calling, which can
+2

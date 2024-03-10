@@ -1,0 +1,1094 @@
+[
+    {
+        "element_id": "9b5732d01f433ea9528154244f55e5a2",
+        "metadata": {
+            "file_directory": "/Users/sasha/github/LlamaIndex/llama_index/docs",
+            "filename": "index.rst",
+            "filetype": "text/markdown",
+            "languages": [
+                "eng"
+            ],
+            "last_modified": "2024-01-08T15:19:23",
+            "page_number": 1
+        },
+        "text": "Welcome to LlamaIndex \ud83e\udd99 !",
+        "type": "NarrativeText"
+    },
+    {
+        "element_id": "f4c17ba9b64b873d0c2925c5fbd9d07a",
+        "metadata": {
+            "file_directory": "/Users/sasha/github/LlamaIndex/llama_index/docs",
+            "filename": "index.rst",
+            "filetype": "text/markdown",
+            "languages": [
+                "eng"
+            ],
+            "last_modified": "2024-01-08T15:19:23",
+            "page_number": 1
+        },
+        "text": "LlamaIndex is a data framework for LLM <https://en.wikipedia.org/wiki/Large_language_model>-based applications to ingest, structure, and access private or domain-specific data. It's available in Python (these docs) and Typescript <https://ts.llamaindex.ai/>.",
+        "type": "NarrativeText"
+    },
+    {
+        "element_id": "63186e1bc324cbfa041c7d7fd5f7846f",
+        "metadata": {
+            "file_directory": "/Users/sasha/github/LlamaIndex/llama_index/docs",
+            "filename": "index.rst",
+            "filetype": "text/markdown",
+            "languages": [
+                "eng"
+            ],
+            "last_modified": "2024-01-08T15:19:23",
+            "page_number": 1
+        },
+        "text": "\ud83d\ude80 Why LlamaIndex?",
+        "type": "Title"
+    },
+    {
+        "element_id": "d0e0c475761c81bc607ee036fa8e3086",
+        "metadata": {
+            "file_directory": "/Users/sasha/github/LlamaIndex/llama_index/docs",
+            "filename": "index.rst",
+            "filetype": "text/markdown",
+            "languages": [
+                "eng"
+            ],
+            "last_modified": "2024-01-08T15:19:23",
+            "page_number": 2,
+            "parent_id": "63186e1bc324cbfa041c7d7fd5f7846f"
+        },
+        "text": "LLMs offer a natural language interface between humans and data. Widely available models come pre-trained on huge amounts of publicly available data like Wikipedia, mailing lists, textbooks, source code and more.",
+        "type": "NarrativeText"
+    },
+    {
+        "element_id": "1b3f26cca61d011dda1685819d0c700d",
+        "metadata": {
+            "file_directory": "/Users/sasha/github/LlamaIndex/llama_index/docs",
+            "filename": "index.rst",
+            "filetype": "text/markdown",
+            "languages": [
+                "eng"
+            ],
+            "last_modified": "2024-01-08T15:19:23",
+            "page_number": 2,
+            "parent_id": "63186e1bc324cbfa041c7d7fd5f7846f"
+        },
+        "text": "However, while LLMs are trained on a great deal of data, they are not trained on your data, which may be private or specific to the problem you're trying to solve. It's behind APIs, in SQL databases, or trapped in PDFs and slide decks.",
+        "type": "NarrativeText"
+    },
+    {
+        "element_id": "69d3e174ee65657b7644bd93776d95e6",
+        "metadata": {
+            "file_directory": "/Users/sasha/github/LlamaIndex/llama_index/docs",
+            "filename": "index.rst",
+            "filetype": "text/markdown",
+            "languages": [
+                "eng"
+            ],
+            "last_modified": "2024-01-08T15:19:23",
+            "page_number": 2,
+            "parent_id": "63186e1bc324cbfa041c7d7fd5f7846f"
+        },
+        "text": "You may choose to fine-tune a LLM with your data, but:",
+        "type": "NarrativeText"
+    },
+    {
+        "element_id": "8c6375b67e60e9ce74ebbb29833f0758",
+        "metadata": {
+            "file_directory": "/Users/sasha/github/LlamaIndex/llama_index/docs",
+            "filename": "index.rst",
+            "filetype": "text/markdown",
+            "languages": [
+                "eng"
+            ],
+            "last_modified": "2024-01-08T15:19:23",
+            "page_number": 2,
+            "parent_id": "63186e1bc324cbfa041c7d7fd5f7846f"
+        },
+        "text": "Training a LLM is expensive.",
+        "type": "ListItem"
+    },
+    {
+        "element_id": "b9974ca0414f0df4a4172c56a125aed2",
+        "metadata": {
+            "file_directory": "/Users/sasha/github/LlamaIndex/llama_index/docs",
+            "filename": "index.rst",
+            "filetype": "text/markdown",
+            "languages": [
+                "eng"
+            ],
+            "last_modified": "2024-01-08T15:19:23",
+            "page_number": 2,
+            "parent_id": "63186e1bc324cbfa041c7d7fd5f7846f"
+        },
+        "text": "Due to the cost to train, it's hard to update a LLM with latest information.",
+        "type": "ListItem"
+    },
+    {
+        "element_id": "484171f8750852f8abe192cb0d0cb80c",
+        "metadata": {
+            "file_directory": "/Users/sasha/github/LlamaIndex/llama_index/docs",
+            "filename": "index.rst",
+            "filetype": "text/markdown",
+            "languages": [
+                "eng"
+            ],
+            "last_modified": "2024-01-08T15:19:23",
+            "page_number": 2,
+            "parent_id": "63186e1bc324cbfa041c7d7fd5f7846f"
+        },
+        "text": "Observability is lacking. When you ask a LLM a question, it's not obvious how the LLM arrived at its answer.",
+        "type": "ListItem"
+    },
+    {
+        "element_id": "d58041a90f39a8629042e0fd57a61332",
+        "metadata": {
+            "file_directory": "/Users/sasha/github/LlamaIndex/llama_index/docs",
+            "filename": "index.rst",
+            "filetype": "text/markdown",
+            "languages": [
+                "eng"
+            ],
+            "last_modified": "2024-01-08T15:19:23",
+            "page_number": 2,
+            "parent_id": "63186e1bc324cbfa041c7d7fd5f7846f"
+        },
+        "text": "LlamaIndex takes a different approach called Retrieval-Augmented Generation (RAG) <./getting_started/concepts.html>_. Instead of asking LLM to generate an answer immediately, LlamaIndex:",
+        "type": "NarrativeText"
+    },
+    {
+        "element_id": "7cb2f1e7420c0c2bb56ba9a02a1a556e",
+        "metadata": {
+            "file_directory": "/Users/sasha/github/LlamaIndex/llama_index/docs",
+            "filename": "index.rst",
+            "filetype": "text/markdown",
+            "languages": [
+                "eng"
+            ],
+            "last_modified": "2024-01-08T15:19:23",
+            "page_number": 2,
+            "parent_id": "63186e1bc324cbfa041c7d7fd5f7846f"
+        },
+        "text": "retrieves information from your data sources first,",
+        "type": "ListItem"
+    },
+    {
+        "element_id": "bdb8877f9a9553120bee2dbda91c2e13",
+        "metadata": {
+            "file_directory": "/Users/sasha/github/LlamaIndex/llama_index/docs",
+            "filename": "index.rst",
+            "filetype": "text/markdown",
+            "languages": [
+                "eng"
+            ],
+            "last_modified": "2024-01-08T15:19:23",
+            "page_number": 2,
+            "parent_id": "63186e1bc324cbfa041c7d7fd5f7846f"
+        },
+        "text": "adds it to your question as context, and",
+        "type": "ListItem"
+    },
+    {
+        "element_id": "b41d8926ac3865f15317fd4bb925061f",
+        "metadata": {
+            "file_directory": "/Users/sasha/github/LlamaIndex/llama_index/docs",
+            "filename": "index.rst",
+            "filetype": "text/markdown",
+            "languages": [
+                "eng"
+            ],
+            "last_modified": "2024-01-08T15:19:23",
+            "page_number": 2,
+            "parent_id": "63186e1bc324cbfa041c7d7fd5f7846f"
+        },
+        "text": "asks the LLM to answer based on the enriched prompt.",
+        "type": "ListItem"
+    },
+    {
+        "element_id": "f2d5360986d84920d58e4797093d318a",
+        "metadata": {
+            "file_directory": "/Users/sasha/github/LlamaIndex/llama_index/docs",
+            "filename": "index.rst",
+            "filetype": "text/markdown",
+            "languages": [
+                "eng"
+            ],
+            "last_modified": "2024-01-08T15:19:23",
+            "page_number": 2,
+            "parent_id": "63186e1bc324cbfa041c7d7fd5f7846f"
+        },
+        "text": "RAG overcomes all three weaknesses of the fine-tuning approach:",
+        "type": "NarrativeText"
+    },
+    {
+        "element_id": "548051f424a6cb007c31e85a18b2b8c3",
+        "metadata": {
+            "file_directory": "/Users/sasha/github/LlamaIndex/llama_index/docs",
+            "filename": "index.rst",
+            "filetype": "text/markdown",
+            "languages": [
+                "eng"
+            ],
+            "last_modified": "2024-01-08T15:19:23",
+            "page_number": 2,
+            "parent_id": "63186e1bc324cbfa041c7d7fd5f7846f"
+        },
+        "text": "There's no training involved, so it's cheap.",
+        "type": "ListItem"
+    },
+    {
+        "element_id": "a6d38e3693917d4e04dbbf648c9f080a",
+        "metadata": {
+            "file_directory": "/Users/sasha/github/LlamaIndex/llama_index/docs",
+            "filename": "index.rst",
+            "filetype": "text/markdown",
+            "languages": [
+                "eng"
+            ],
+            "last_modified": "2024-01-08T15:19:23",
+            "page_number": 2,
+            "parent_id": "63186e1bc324cbfa041c7d7fd5f7846f"
+        },
+        "text": "Data is fetched only when you ask for them, so it's always up to date.",
+        "type": "ListItem"
+    },
+    {
+        "element_id": "7adc5aa6fb661c5bebd6081eb79e10f9",
+        "metadata": {
+            "file_directory": "/Users/sasha/github/LlamaIndex/llama_index/docs",
+            "filename": "index.rst",
+            "filetype": "text/markdown",
+            "languages": [
+                "eng"
+            ],
+            "last_modified": "2024-01-08T15:19:23",
+            "page_number": 2,
+            "parent_id": "63186e1bc324cbfa041c7d7fd5f7846f"
+        },
+        "text": "LlamaIndex can show you the retrieved documents, so it's more trustworthy.",
+        "type": "ListItem"
+    },
+    {
+        "element_id": "8e6ccf28e00062f7626cea2da21d68a4",
+        "metadata": {
+            "file_directory": "/Users/sasha/github/LlamaIndex/llama_index/docs",
+            "filename": "index.rst",
+            "filetype": "text/markdown",
+            "languages": [
+                "eng"
+            ],
+            "last_modified": "2024-01-08T15:19:23",
+            "page_number": 2,
+            "parent_id": "63186e1bc324cbfa041c7d7fd5f7846f"
+        },
+        "text": "LlamaIndex imposes no restriction on how you use LLMs. You can still use LLMs as auto-complete, chatbots, semi-autonomous agents, and more (see Use Cases on the left). It only makes LLMs more relevant to you.",
+        "type": "NarrativeText"
+    },
+    {
+        "element_id": "2c6803ce7dc4f40ae4e1db759bae2c05",
+        "metadata": {
+            "file_directory": "/Users/sasha/github/LlamaIndex/llama_index/docs",
+            "filename": "index.rst",
+            "filetype": "text/markdown",
+            "languages": [
+                "eng"
+            ],
+            "last_modified": "2024-01-08T15:19:23",
+            "page_number": 2,
+            "parent_id": "63186e1bc324cbfa041c7d7fd5f7846f"
+        },
+        "text": "\ud83e\udd99 How can LlamaIndex help?",
+        "type": "NarrativeText"
+    },
+    {
+        "element_id": "d0e0cf2052d0da2365c532bacabe7211",
+        "metadata": {
+            "file_directory": "/Users/sasha/github/LlamaIndex/llama_index/docs",
+            "filename": "index.rst",
+            "filetype": "text/markdown",
+            "languages": [
+                "eng"
+            ],
+            "last_modified": "2024-01-08T15:19:23",
+            "page_number": 3,
+            "parent_id": "63186e1bc324cbfa041c7d7fd5f7846f"
+        },
+        "text": "LlamaIndex provides the following tools:",
+        "type": "NarrativeText"
+    },
+    {
+        "element_id": "b1099cc8227ec91e44737c5568351a8c",
+        "metadata": {
+            "file_directory": "/Users/sasha/github/LlamaIndex/llama_index/docs",
+            "filename": "index.rst",
+            "filetype": "text/markdown",
+            "languages": [
+                "eng"
+            ],
+            "last_modified": "2024-01-08T15:19:23",
+            "page_number": 3,
+            "parent_id": "63186e1bc324cbfa041c7d7fd5f7846f"
+        },
+        "text": "Data connectors ingest your existing data from their native source and format. These could be APIs, PDFs, SQL, and (much) more.",
+        "type": "ListItem"
+    },
+    {
+        "element_id": "2dfc417445a85b5ae6634ae2589bc1bf",
+        "metadata": {
+            "file_directory": "/Users/sasha/github/LlamaIndex/llama_index/docs",
+            "filename": "index.rst",
+            "filetype": "text/markdown",
+            "languages": [
+                "eng"
+            ],
+            "last_modified": "2024-01-08T15:19:23",
+            "page_number": 3,
+            "parent_id": "63186e1bc324cbfa041c7d7fd5f7846f"
+        },
+        "text": "Data indexes structure your data in intermediate representations that are easy and performant for LLMs to consume.",
+        "type": "ListItem"
+    },
+    {
+        "element_id": "cf11291eca064273bd414749a8709ffd",
+        "metadata": {
+            "file_directory": "/Users/sasha/github/LlamaIndex/llama_index/docs",
+            "filename": "index.rst",
+            "filetype": "text/markdown",
+            "languages": [
+                "eng"
+            ],
+            "last_modified": "2024-01-08T15:19:23",
+            "page_number": 3,
+            "parent_id": "63186e1bc324cbfa041c7d7fd5f7846f"
+        },
+        "text": "Engines provide natural language access to your data. For example:",
+        "type": "ListItem"
+    },
+    {
+        "element_id": "19667d2894a9ae83211e408fed6fe0ee",
+        "metadata": {
+            "file_directory": "/Users/sasha/github/LlamaIndex/llama_index/docs",
+            "filename": "index.rst",
+            "filetype": "text/markdown",
+            "languages": [
+                "eng"
+            ],
+            "last_modified": "2024-01-08T15:19:23",
+            "page_number": 3,
+            "parent_id": "63186e1bc324cbfa041c7d7fd5f7846f"
+        },
+        "text": "Query engines are powerful retrieval interfaces for knowledge-augmented output.",
+        "type": "ListItem"
+    },
+    {
+        "element_id": "60ee6c44f0f35fa0b6bd47b33a3a5235",
+        "metadata": {
+            "file_directory": "/Users/sasha/github/LlamaIndex/llama_index/docs",
+            "filename": "index.rst",
+            "filetype": "text/markdown",
+            "languages": [
+                "eng"
+            ],
+            "last_modified": "2024-01-08T15:19:23",
+            "page_number": 3,
+            "parent_id": "63186e1bc324cbfa041c7d7fd5f7846f"
+        },
+        "text": "Chat engines are conversational interfaces for multi-message, \"back and forth\" interactions with your data.",
+        "type": "ListItem"
+    },
+    {
+        "element_id": "e49fdac8b09dfcd8757fd8d5deb956fc",
+        "metadata": {
+            "file_directory": "/Users/sasha/github/LlamaIndex/llama_index/docs",
+            "filename": "index.rst",
+            "filetype": "text/markdown",
+            "languages": [
+                "eng"
+            ],
+            "last_modified": "2024-01-08T15:19:23",
+            "page_number": 3,
+            "parent_id": "63186e1bc324cbfa041c7d7fd5f7846f"
+        },
+        "text": "Data agents are LLM-powered knowledge workers augmented by tools, from simple helper functions to API integrations and more.",
+        "type": "ListItem"
+    },
+    {
+        "element_id": "3359bfc7eaed11f7e5f64d8bf69f590f",
+        "metadata": {
+            "file_directory": "/Users/sasha/github/LlamaIndex/llama_index/docs",
+            "filename": "index.rst",
+            "filetype": "text/markdown",
+            "languages": [
+                "eng"
+            ],
+            "last_modified": "2024-01-08T15:19:23",
+            "page_number": 3,
+            "parent_id": "63186e1bc324cbfa041c7d7fd5f7846f"
+        },
+        "text": "Application integrations tie LlamaIndex back into the rest of your ecosystem. This could be LangChain, Flask, Docker, ChatGPT, or\u2026 anything else!",
+        "type": "ListItem"
+    },
+    {
+        "element_id": "d850b331f5f35146743ce8c2715a174d",
+        "metadata": {
+            "file_directory": "/Users/sasha/github/LlamaIndex/llama_index/docs",
+            "filename": "index.rst",
+            "filetype": "text/markdown",
+            "languages": [
+                "eng"
+            ],
+            "last_modified": "2024-01-08T15:19:23",
+            "page_number": 3,
+            "parent_id": "63186e1bc324cbfa041c7d7fd5f7846f"
+        },
+        "text": "\ud83d\udc68\u200d\ud83d\udc69\u200d\ud83d\udc67\u200d\ud83d\udc66 Who is LlamaIndex for?",
+        "type": "NarrativeText"
+    },
+    {
+        "element_id": "042415b2e9718cdd820eeaf155842a0e",
+        "metadata": {
+            "file_directory": "/Users/sasha/github/LlamaIndex/llama_index/docs",
+            "filename": "index.rst",
+            "filetype": "text/markdown",
+            "languages": [
+                "eng"
+            ],
+            "last_modified": "2024-01-08T15:19:23",
+            "page_number": 4,
+            "parent_id": "63186e1bc324cbfa041c7d7fd5f7846f"
+        },
+        "text": "LlamaIndex provides tools for beginners, advanced users, and everyone in between.",
+        "type": "NarrativeText"
+    },
+    {
+        "element_id": "dbc21a46dcd93fe9928c52d4914cbafc",
+        "metadata": {
+            "file_directory": "/Users/sasha/github/LlamaIndex/llama_index/docs",
+            "filename": "index.rst",
+            "filetype": "text/markdown",
+            "languages": [
+                "eng"
+            ],
+            "last_modified": "2024-01-08T15:19:23",
+            "page_number": 4,
+            "parent_id": "63186e1bc324cbfa041c7d7fd5f7846f"
+        },
+        "text": "Our high-level API allows beginner users to use LlamaIndex to ingest and query their data in 5 lines of code.",
+        "type": "NarrativeText"
+    },
+    {
+        "element_id": "5c118de04543a2bb00988cb5ba00b713",
+        "metadata": {
+            "file_directory": "/Users/sasha/github/LlamaIndex/llama_index/docs",
+            "filename": "index.rst",
+            "filetype": "text/markdown",
+            "languages": [
+                "eng"
+            ],
+            "last_modified": "2024-01-08T15:19:23",
+            "page_number": 4,
+            "parent_id": "63186e1bc324cbfa041c7d7fd5f7846f"
+        },
+        "text": "For more complex applications, our lower-level APIs allow advanced users to customize and extend any module\u2014data connectors, indices, retrievers, query engines, reranking modules\u2014to fit their needs.",
+        "type": "NarrativeText"
+    },
+    {
+        "element_id": "d00eca1bae6742803906ab42a831e8b5",
+        "metadata": {
+            "file_directory": "/Users/sasha/github/LlamaIndex/llama_index/docs",
+            "filename": "index.rst",
+            "filetype": "text/markdown",
+            "languages": [
+                "eng"
+            ],
+            "last_modified": "2024-01-08T15:19:23",
+            "page_number": 4
+        },
+        "text": "Getting Started",
+        "type": "Title"
+    },
+    {
+        "element_id": "32950aa700880ed5aef978ca19e61467",
+        "metadata": {
+            "file_directory": "/Users/sasha/github/LlamaIndex/llama_index/docs",
+            "filename": "index.rst",
+            "filetype": "text/markdown",
+            "languages": [
+                "eng"
+            ],
+            "last_modified": "2024-01-08T15:19:23",
+            "page_number": 5,
+            "parent_id": "d00eca1bae6742803906ab42a831e8b5"
+        },
+        "text": "To install the library:",
+        "type": "NarrativeText"
+    },
+    {
+        "element_id": "cd835afe666e5824a8b1968421aa8944",
+        "metadata": {
+            "file_directory": "/Users/sasha/github/LlamaIndex/llama_index/docs",
+            "filename": "index.rst",
+            "filetype": "text/markdown",
+            "languages": [
+                "eng"
+            ],
+            "last_modified": "2024-01-08T15:19:23",
+            "page_number": 5
+        },
+        "text": "pip install llama-index",
+        "type": "Title"
+    },
+    {
+        "element_id": "1e367a23a58bdd9e45e3587502421e9d",
+        "metadata": {
+            "file_directory": "/Users/sasha/github/LlamaIndex/llama_index/docs",
+            "filename": "index.rst",
+            "filetype": "text/markdown",
+            "languages": [
+                "eng"
+            ],
+            "last_modified": "2024-01-08T15:19:23",
+            "page_number": 5,
+            "parent_id": "cd835afe666e5824a8b1968421aa8944"
+        },
+        "text": "We recommend starting at how to read these docs <./getting_started/reading.html>_, which will point you to the right place based on your experience level.",
+        "type": "NarrativeText"
+    },
+    {
+        "element_id": "56838354e8c5f05fda64ef2772955083",
+        "metadata": {
+            "file_directory": "/Users/sasha/github/LlamaIndex/llama_index/docs",
+            "filename": "index.rst",
+            "filetype": "text/markdown",
+            "languages": [
+                "eng"
+            ],
+            "last_modified": "2024-01-08T15:19:23",
+            "page_number": 5
+        },
+        "text": "\ud83d\uddfa\ufe0f Ecosystem",
+        "type": "Title"
+    },
+    {
+        "element_id": "0e383e41bf6e3e2d311d41705d3abee7",
+        "metadata": {
+            "file_directory": "/Users/sasha/github/LlamaIndex/llama_index/docs",
+            "filename": "index.rst",
+            "filetype": "text/markdown",
+            "languages": [
+                "eng"
+            ],
+            "last_modified": "2024-01-08T15:19:23",
+            "page_number": 6,
+            "parent_id": "56838354e8c5f05fda64ef2772955083"
+        },
+        "text": "To download or contribute, find LlamaIndex on:",
+        "type": "NarrativeText"
+    },
+    {
+        "element_id": "fc4573146e91d631821d4aa6c483b26b",
+        "metadata": {
+            "file_directory": "/Users/sasha/github/LlamaIndex/llama_index/docs",
+            "filename": "index.rst",
+            "filetype": "text/markdown",
+            "languages": [
+                "eng"
+            ],
+            "last_modified": "2024-01-08T15:19:23",
+            "page_number": 6,
+            "parent_id": "56838354e8c5f05fda64ef2772955083"
+        },
+        "text": "Github: https://github.com/jerryjliu/llama_index",
+        "type": "ListItem"
+    },
+    {
+        "element_id": "949a167803067b15ffb15b89b01526f4",
+        "metadata": {
+            "file_directory": "/Users/sasha/github/LlamaIndex/llama_index/docs",
+            "filename": "index.rst",
+            "filetype": "text/markdown",
+            "languages": [
+                "eng"
+            ],
+            "last_modified": "2024-01-08T15:19:23",
+            "page_number": 6,
+            "parent_id": "56838354e8c5f05fda64ef2772955083"
+        },
+        "text": "PyPi:",
+        "type": "ListItem"
+    },
+    {
+        "element_id": "15f3de64e17e1fa90050e790c0631d11",
+        "metadata": {
+            "file_directory": "/Users/sasha/github/LlamaIndex/llama_index/docs",
+            "filename": "index.rst",
+            "filetype": "text/markdown",
+            "languages": [
+                "eng"
+            ],
+            "last_modified": "2024-01-08T15:19:23",
+            "page_number": 6,
+            "parent_id": "56838354e8c5f05fda64ef2772955083"
+        },
+        "text": "LlamaIndex: https://pypi.org/project/llama-index/.",
+        "type": "ListItem"
+    },
+    {
+        "element_id": "3bc9dc6ec96d743eb1069258cf615ce6",
+        "metadata": {
+            "file_directory": "/Users/sasha/github/LlamaIndex/llama_index/docs",
+            "filename": "index.rst",
+            "filetype": "text/markdown",
+            "languages": [
+                "eng"
+            ],
+            "last_modified": "2024-01-08T15:19:23",
+            "page_number": 6,
+            "parent_id": "56838354e8c5f05fda64ef2772955083"
+        },
+        "text": "GPT Index (duplicate): https://pypi.org/project/gpt-index/.",
+        "type": "ListItem"
+    },
+    {
+        "element_id": "50f20b519df52b2642673401d1d6a13c",
+        "metadata": {
+            "file_directory": "/Users/sasha/github/LlamaIndex/llama_index/docs",
+            "filename": "index.rst",
+            "filetype": "text/markdown",
+            "languages": [
+                "eng"
+            ],
+            "last_modified": "2024-01-08T15:19:23",
+            "page_number": 6,
+            "parent_id": "56838354e8c5f05fda64ef2772955083"
+        },
+        "text": "NPM (Typescript/Javascript):",
+        "type": "ListItem"
+    },
+    {
+        "element_id": "b757eac14d0dae546398fea7a7084526",
+        "metadata": {
+            "file_directory": "/Users/sasha/github/LlamaIndex/llama_index/docs",
+            "filename": "index.rst",
+            "filetype": "text/markdown",
+            "languages": [
+                "eng"
+            ],
+            "last_modified": "2024-01-08T15:19:23",
+            "page_number": 6,
+            "parent_id": "56838354e8c5f05fda64ef2772955083"
+        },
+        "text": "Github: https://github.com/run-llama/LlamaIndexTS",
+        "type": "ListItem"
+    },
+    {
+        "element_id": "429fdae23a589ca1506453300843ea4d",
+        "metadata": {
+            "file_directory": "/Users/sasha/github/LlamaIndex/llama_index/docs",
+            "filename": "index.rst",
+            "filetype": "text/markdown",
+            "languages": [
+                "eng"
+            ],
+            "last_modified": "2024-01-08T15:19:23",
+            "page_number": 6,
+            "parent_id": "56838354e8c5f05fda64ef2772955083"
+        },
+        "text": "Docs: https://ts.llamaindex.ai/",
+        "type": "ListItem"
+    },
+    {
+        "element_id": "4369d79d1ba17cf353752cdd0e04d9b3",
+        "metadata": {
+            "file_directory": "/Users/sasha/github/LlamaIndex/llama_index/docs",
+            "filename": "index.rst",
+            "filetype": "text/markdown",
+            "languages": [
+                "eng"
+            ],
+            "last_modified": "2024-01-08T15:19:23",
+            "page_number": 6,
+            "parent_id": "56838354e8c5f05fda64ef2772955083"
+        },
+        "text": "LlamaIndex.TS: https://www.npmjs.com/package/llamaindex",
+        "type": "ListItem"
+    },
+    {
+        "element_id": "bb501d7877eb7ddbd40baf7990e80582",
+        "metadata": {
+            "file_directory": "/Users/sasha/github/LlamaIndex/llama_index/docs",
+            "filename": "index.rst",
+            "filetype": "text/markdown",
+            "languages": [
+                "eng"
+            ],
+            "last_modified": "2024-01-08T15:19:23",
+            "page_number": 6
+        },
+        "text": "Community",
+        "type": "Title"
+    },
+    {
+        "element_id": "262a2347dd29836f3812a88df28477fa",
+        "metadata": {
+            "file_directory": "/Users/sasha/github/LlamaIndex/llama_index/docs",
+            "filename": "index.rst",
+            "filetype": "text/markdown",
+            "languages": [
+                "eng"
+            ],
+            "last_modified": "2024-01-08T15:19:23",
+            "page_number": 6,
+            "parent_id": "bb501d7877eb7ddbd40baf7990e80582"
+        },
+        "text": "Need help? Have a feature suggestion? Join the LlamaIndex community:",
+        "type": "NarrativeText"
+    },
+    {
+        "element_id": "c0a4fcb59dded6a2c654688f46cd1043",
+        "metadata": {
+            "file_directory": "/Users/sasha/github/LlamaIndex/llama_index/docs",
+            "filename": "index.rst",
+            "filetype": "text/markdown",
+            "languages": [
+                "eng"
+            ],
+            "last_modified": "2024-01-08T15:19:23",
+            "page_number": 6,
+            "parent_id": "bb501d7877eb7ddbd40baf7990e80582"
+        },
+        "text": "Twitter: https://twitter.com/llama_index",
+        "type": "ListItem"
+    },
+    {
+        "element_id": "f5c352f0cbac01a3253a642ed0c6d43a",
+        "metadata": {
+            "file_directory": "/Users/sasha/github/LlamaIndex/llama_index/docs",
+            "filename": "index.rst",
+            "filetype": "text/markdown",
+            "languages": [
+                "eng"
+            ],
+            "last_modified": "2024-01-08T15:19:23",
+            "page_number": 6,
+            "parent_id": "bb501d7877eb7ddbd40baf7990e80582"
+        },
+        "text": "Discord https://discord.gg/dGcwcsnxhU",
+        "type": "ListItem"
+    },
+    {
+        "element_id": "4120750fa665e010d58d100868984a0f",
+        "metadata": {
+            "file_directory": "/Users/sasha/github/LlamaIndex/llama_index/docs",
+            "filename": "index.rst",
+            "filetype": "text/markdown",
+            "languages": [
+                "eng"
+            ],
+            "last_modified": "2024-01-08T15:19:23",
+            "page_number": 6
+        },
+        "text": "Associated projects",
+        "type": "Title"
+    },
+    {
+        "element_id": "dfc7275fdaed2ee0ee78a9bee39ac694",
+        "metadata": {
+            "file_directory": "/Users/sasha/github/LlamaIndex/llama_index/docs",
+            "filename": "index.rst",
+            "filetype": "text/markdown",
+            "languages": [
+                "eng"
+            ],
+            "last_modified": "2024-01-08T15:19:23",
+            "page_number": 6,
+            "parent_id": "4120750fa665e010d58d100868984a0f"
+        },
+        "text": "\ud83c\udfe1 LlamaHub: https://llamahub.ai | A large (and growing!) collection of custom data connectors",
+        "type": "ListItem"
+    },
+    {
+        "element_id": "9cff01d3bbb775144295b6750f287c4f",
+        "metadata": {
+            "file_directory": "/Users/sasha/github/LlamaIndex/llama_index/docs",
+            "filename": "index.rst",
+            "filetype": "text/markdown",
+            "languages": [
+                "eng"
+            ],
+            "last_modified": "2024-01-08T15:19:23",
+            "page_number": 6,
+            "parent_id": "4120750fa665e010d58d100868984a0f"
+        },
+        "text": "\ud83e\uddea LlamaLab: https://github.com/run-llama/llama-lab | Ambitious projects built on top of LlamaIndex",
+        "type": "ListItem"
+    },
+    {
+        "element_id": "c74be939b25628cd880b00008904c93f",
+        "metadata": {
+            "file_directory": "/Users/sasha/github/LlamaIndex/llama_index/docs",
+            "filename": "index.rst",
+            "filetype": "text/markdown",
+            "languages": [
+                "eng"
+            ],
+            "last_modified": "2024-01-08T15:19:23",
+            "page_number": 6,
+            "parent_id": "4120750fa665e010d58d100868984a0f"
+        },
+        "text": ".. toctree::\n   :maxdepth: 1\n   :caption: Getting Started\n   :hidden:",
+        "type": "NarrativeText"
+    },
+    {
+        "element_id": "df1e2bca004e79a811a713ebd88f17b9",
+        "metadata": {
+            "file_directory": "/Users/sasha/github/LlamaIndex/llama_index/docs",
+            "filename": "index.rst",
+            "filetype": "text/markdown",
+            "languages": [
+                "eng"
+            ],
+            "last_modified": "2024-01-08T15:19:23",
+            "page_number": 6,
+            "parent_id": "4120750fa665e010d58d100868984a0f"
+        },
+        "text": "getting_started/installation.md\n   getting_started/reading.md\n   getting_started/starter_example.md\n   getting_started/concepts.md\n   getting_started/customization.rst\n   getting_started/discover_llamaindex.md",
+        "type": "UncategorizedText"
+    },
+    {
+        "element_id": "cbda03ff4b55bd5519c152d99e15e211",
+        "metadata": {
+            "file_directory": "/Users/sasha/github/LlamaIndex/llama_index/docs",
+            "filename": "index.rst",
+            "filetype": "text/markdown",
+            "languages": [
+                "eng"
+            ],
+            "last_modified": "2024-01-08T15:19:23",
+            "page_number": 6,
+            "parent_id": "4120750fa665e010d58d100868984a0f"
+        },
+        "text": ".. toctree::\n   :maxdepth: 2\n   :caption: Use Cases\n   :hidden:",
+        "type": "UncategorizedText"
+    },
+    {
+        "element_id": "d5d9e56d7e5ca883592d4272527fc22f",
+        "metadata": {
+            "file_directory": "/Users/sasha/github/LlamaIndex/llama_index/docs",
+            "filename": "index.rst",
+            "filetype": "text/markdown",
+            "languages": [
+                "eng"
+            ],
+            "last_modified": "2024-01-08T15:19:23",
+            "page_number": 6,
+            "parent_id": "4120750fa665e010d58d100868984a0f"
+        },
+        "text": "use_cases/q_and_a.md\n   use_cases/chatbots.md\n   use_cases/agents.md\n   use_cases/extraction.md\n   use_cases/multimodal.md",
+        "type": "UncategorizedText"
+    },
+    {
+        "element_id": "52daae022c42d7c278c769c685c6f412",
+        "metadata": {
+            "file_directory": "/Users/sasha/github/LlamaIndex/llama_index/docs",
+            "filename": "index.rst",
+            "filetype": "text/markdown",
+            "languages": [
+                "eng"
+            ],
+            "last_modified": "2024-01-08T15:19:23",
+            "page_number": 6,
+            "parent_id": "4120750fa665e010d58d100868984a0f"
+        },
+        "text": ".. toctree::\n   :maxdepth: 2\n   :caption: Understanding\n   :hidden:",
+        "type": "UncategorizedText"
+    },
+    {
+        "element_id": "9809ffbd77eb1e79f30a7d0fd23caa2f",
+        "metadata": {
+            "file_directory": "/Users/sasha/github/LlamaIndex/llama_index/docs",
+            "filename": "index.rst",
+            "filetype": "text/markdown",
+            "languages": [
+                "eng"
+            ],
+            "last_modified": "2024-01-08T15:19:23",
+            "page_number": 6,
+            "parent_id": "4120750fa665e010d58d100868984a0f"
+        },
+        "text": "understanding/understanding.md\n   understanding/using_llms/using_llms.md\n   understanding/loading/loading.md\n   understanding/indexing/indexing.md\n   understanding/storing/storing.md\n   understanding/querying/querying.md\n   understanding/putting_it_all_together/putting_it_all_together.md\n   understanding/tracing_and_debugging/tracing_and_debugging.md\n   understanding/evaluating/evaluating.md",
+        "type": "UncategorizedText"
+    },
+    {
+        "element_id": "21b0f78e845b3aad577d9da075e3f91e",
+        "metadata": {
+            "file_directory": "/Users/sasha/github/LlamaIndex/llama_index/docs",
+            "filename": "index.rst",
+            "filetype": "text/markdown",
+            "languages": [
+                "eng"
+            ],
+            "last_modified": "2024-01-08T15:19:23",
+            "page_number": 6,
+            "parent_id": "4120750fa665e010d58d100868984a0f"
+        },
+        "text": ".. toctree::\n   :maxdepth: 2\n   :caption: Optimizing\n   :hidden:",
+        "type": "UncategorizedText"
+    },
+    {
+        "element_id": "a511e464c7151818476e81ae2c59d240",
+        "metadata": {
+            "file_directory": "/Users/sasha/github/LlamaIndex/llama_index/docs",
+            "filename": "index.rst",
+            "filetype": "text/markdown",
+            "languages": [
+                "eng"
+            ],
+            "last_modified": "2024-01-08T15:19:23",
+            "page_number": 6,
+            "parent_id": "4120750fa665e010d58d100868984a0f"
+        },
+        "text": "optimizing/basic_strategies/basic_strategies.md\n   optimizing/advanced_retrieval/advanced_retrieval.md\n   optimizing/agentic_strategies/agentic_strategies.md\n   optimizing/evaluation/evaluation.md\n   optimizing/fine-tuning/fine-tuning.md\n   optimizing/production_rag.md\n   optimizing/building_rag_from_scratch.md\n.. toctree::\n   :maxdepth: 2\n   :caption: Module Guides\n   :hidden:",
+        "type": "UncategorizedText"
+    },
+    {
+        "element_id": "138a5c92fee6eef8efd48220c6b27bd6",
+        "metadata": {
+            "file_directory": "/Users/sasha/github/LlamaIndex/llama_index/docs",
+            "filename": "index.rst",
+            "filetype": "text/markdown",
+            "languages": [
+                "eng"
+            ],
+            "last_modified": "2024-01-08T15:19:23",
+            "page_number": 6,
+            "parent_id": "4120750fa665e010d58d100868984a0f"
+        },
+        "text": "module_guides/models/models.md\n   module_guides/models/prompts.md\n   module_guides/loading/loading.md\n   module_guides/indexing/indexing.md\n   module_guides/storing/storing.md\n   module_guides/querying/querying.md\n   module_guides/observability/observability.md\n   module_guides/evaluating/root.md\n   module_guides/supporting_modules/supporting_modules.md",
+        "type": "UncategorizedText"
+    },
+    {
+        "element_id": "8b17ff5fff87b3e6eaf0cce8025158c1",
+        "metadata": {
+            "file_directory": "/Users/sasha/github/LlamaIndex/llama_index/docs",
+            "filename": "index.rst",
+            "filetype": "text/markdown",
+            "languages": [
+                "eng"
+            ],
+            "last_modified": "2024-01-08T15:19:23",
+            "page_number": 6,
+            "parent_id": "4120750fa665e010d58d100868984a0f"
+        },
+        "text": ".. toctree::\n   :maxdepth: 1\n   :caption: API Reference\n   :hidden:",
+        "type": "UncategorizedText"
+    },
+    {
+        "element_id": "93fc9e7f036d67f5fcb75dc7dd42aa4c",
+        "metadata": {
+            "file_directory": "/Users/sasha/github/LlamaIndex/llama_index/docs",
+            "filename": "index.rst",
+            "filetype": "text/markdown",
+            "languages": [
+                "eng"
+            ],
+            "last_modified": "2024-01-08T15:19:23",
+            "page_number": 6
+        },
+        "text": "api_reference/index.rst",
+        "type": "Title"
+    },
+    {
+        "element_id": "c4eddc070678877b3a7e393f3b6819e3",
+        "metadata": {
+            "file_directory": "/Users/sasha/github/LlamaIndex/llama_index/docs",
+            "filename": "index.rst",
+            "filetype": "text/markdown",
+            "languages": [
+                "eng"
+            ],
+            "last_modified": "2024-01-08T15:19:23",
+            "page_number": 6,
+            "parent_id": "93fc9e7f036d67f5fcb75dc7dd42aa4c"
+        },
+        "text": ".. toctree::\n   :maxdepth: 2\n   :caption: Community\n   :hidden:",
+        "type": "UncategorizedText"
+    },
+    {
+        "element_id": "042b90aec56a4feeacee6f8c727e5dd7",
+        "metadata": {
+            "file_directory": "/Users/sasha/github/LlamaIndex/llama_index/docs",
+            "filename": "index.rst",
+            "filetype": "text/markdown",
+            "languages": [
+                "eng"
+            ],
+            "last_modified": "2024-01-08T15:19:23",
+            "page_number": 6
+        },
+        "text": "community/integrations.md\n   community/frequently_asked_questions.md\n   community/full_stack_projects.md",
+        "type": "Title"
+    },
+    {
+        "element_id": "1b3876b3e97c00c9f9cc9b4ffda5a764",
+        "metadata": {
+            "file_directory": "/Users/sasha/github/LlamaIndex/llama_index/docs",
+            "filename": "index.rst",
+            "filetype": "text/markdown",
+            "languages": [
+                "eng"
+            ],
+            "last_modified": "2024-01-08T15:19:23",
+            "page_number": 6,
+            "parent_id": "042b90aec56a4feeacee6f8c727e5dd7"
+        },
+        "text": ".. toctree::\n   :maxdepth: 2\n   :caption: Contributing\n   :hidden:",
+        "type": "UncategorizedText"
+    },
+    {
+        "element_id": "ac86bbf5a501123dbdb08c344411d928",
+        "metadata": {
+            "file_directory": "/Users/sasha/github/LlamaIndex/llama_index/docs",
+            "filename": "index.rst",
+            "filetype": "text/markdown",
+            "languages": [
+                "eng"
+            ],
+            "last_modified": "2024-01-08T15:19:23",
+            "page_number": 6
+        },
+        "text": "contributing/contributing.rst\n   contributing/documentation.rst",
+        "type": "Title"
+    },
+    {
+        "element_id": "0b32827b38044cbcacf7c8c091d81088",
+        "metadata": {
+            "file_directory": "/Users/sasha/github/LlamaIndex/llama_index/docs",
+            "filename": "index.rst",
+            "filetype": "text/markdown",
+            "languages": [
+                "eng"
+            ],
+            "last_modified": "2024-01-08T15:19:23",
+            "page_number": 6,
+            "parent_id": "ac86bbf5a501123dbdb08c344411d928"
+        },
+        "text": ".. toctree::\n   :maxdepth: 2\n   :caption: Changes\n   :hidden:",
+        "type": "UncategorizedText"
+    },
+    {
+        "element_id": "5b00a4bf42642bf37ec98ca3a32096c4",
+        "metadata": {
+            "file_directory": "/Users/sasha/github/LlamaIndex/llama_index/docs",
+            "filename": "index.rst",
+            "filetype": "text/markdown",
+            "languages": [
+                "eng"
+            ],
+            "last_modified": "2024-01-08T15:19:23",
+            "page_number": 6
+        },
+        "text": "changes/changelog.rst\n   changes/deprecated_terms.md",
+        "type": "Title"
+    }
+]

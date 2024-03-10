@@ -1,0 +1,49 @@
+68, 5, 13, 9], with different capabilities and applications, as well as parameter-efficient training techniques [32, 24, 23]
+for finetuning and customizing. LLMCompiler enables efficient parallel function calling for open-source models,
+and also, as we will show later in Sec. 4, it can potentially achieve better latency as compared to OpenAI’s recent
+parallel function calling capability.
+2.2 Tool-Augmented LLMs
+Early applications of LLMs were limited to language understanding and generation tasks. However, the reasoning
+capability of LLMs enabled exploring LLMs as independent agents, each of which can carry a different task. This
+concept was then expanded to function calling capability where the LLM could even specify the function’s arguments.
+Notable works here include the early work of [47], which produced a custom LLM output format that would be
+parsed to perform LLM information retrieval. The key here was that the LLM decided what the inputs for calling
+the functions should be, as well as where to insert the result. Subsequent work [35, 48] developed frameworks for
+calling many different external APIs to support allowing these agents to execute complex tasks. ReAct [65] presented
+a study where LLMs interact with external environments using an API, integrating reasoning and action generation for
+improved performance in various tasks such as QA, fact verification, and decision-making benchmarks [61, 52, 49, 63].
+Gorilla [43] is a finetuned LLM designed to translate natural language input to function calls given documentation for
+the APIs, aiming to allow LLMs to retrieve and update documentation when they change. In an effort to simulate and
+evaluate on real-world API calls, Toolbench [45] and API-Bank [34] introduced benchmarks and datasets for tool-
+augmented LLMs in different domains. RestGPT [50] extended LLMs to support REST APIs, which allows them to
+interact with web services and clients. Moreover, OpenAI [40] released their own function calling capabilities within
+their API, allowing their LLMs to return formatted JSON for execution.
+2.3 Plan and Solve Strategy
+Several studies [27, 59, 69, 42, 44, 70, 19, 55] have explored prompting methods of breaking down complex queries
+into various levels of detail to solve them, thereby improving LLM’s performance in reasoning tasks. Specifically,
+Decomposed Prompting [27] is the method to tackle complex tasks by decomposing them into simpler sub-tasks, each
+optimized through dedicated prompting-based LLMs. Step-Back Prompting [69] presented the LLM prompt allowing
+LLMs to abstract high-level concepts from details, significantly enhancing reasoning abilities across various tasks.
+Adding to this, Plan-and-Solve Prompting [55] segments multi-step reasoning tasks into subtasks to minimize errors
+and improve task accuracy without manual prompting. However, note that these methods primarily focus on improving
+the accuracy on reasoning benchmarks. In contrast, LLMCompiler uses a planner to identify parallelizable patterns
+within queries, aiming to reduce latency while maintaining accuracy.
+A notable work is ReWOO [60] which employs a planner to separate the reasoning process from the execution and
+observation phases, aiming to decrease token usage and cost as compared to ReAct. Our approach is different from
+ReWOO in multiple aspects. First, LLMCompiler allows parallel function calling which can reduce latency as well
+as cost. Second, LLMCompiler supports dynamic replanning which is important for problems whose execution flow
+cannot be determined statically in the beginning (Sec. 4.3).
+3 Methodology
+To illustrate the system components of LLMCompiler , we begin with a simple 2-way parallel example shown in Fig-
+ure 2. Consider the user question, “How much does Microsoft’s market cap need to increase to exceed Apple’s market
+cap?” To answer this question, the LLM first needs to perform web searches to find the market cap of Apple and
+Microsoft, and then divide Apple’s market cap by that of Microsoft. While the existing frameworks, including ReAct,
+perform these tasks in a sequential, one-at-a-time manner, it is evident that the two search queries can be executed in
+parallel. The important question is how to automatically detect which tasks can be performed in parallel and which
+ones are interdependent, and then to orchestrate the execution of the different tasks accordingly. LLMCompiler
+accomplishes this through a system that consists of the following three components: an LLM Planner component that
+generates the sequence of the different tasks and their dependencies; a Task Fetching component that dynamically
+determines which set of tasks could be executed and performs necessary argument replacements based on intermedi-
+ate results; and an Executor component which executes the necessary function calls given by the Task Fetching part.
+These components are discussed in more detail below.
+4

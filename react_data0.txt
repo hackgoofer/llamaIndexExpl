@@ -1,0 +1,48 @@
+Published as a conference paper at ICLR 2023
+REAC T: S YNERGIZING REASONING AND ACTING IN
+LANGUAGE MODELS
+Shunyu Yao∗*,1, Jeffrey Zhao2, Dian Yu2, Nan Du2, Izhak Shafran2, Karthik Narasimhan1, Yuan Cao2
+1Department of Computer Science, Princeton University
+2Google Research, Brain team
+1{shunyuy,karthikn}@princeton.edu
+2{jeffreyzhao,dianyu,dunan,izhak,yuancao}@google.com
+ABSTRACT
+While large language models (LLMs) have demonstrated impressive performance
+across tasks in language understanding and interactive decision making, their
+abilities for reasoning (e.g. chain-of-thought prompting) and acting (e.g. action
+plan generation) have primarily been studied as separate topics. In this paper, we
+explore the use of LLMs to generate both reasoning traces and task-speciﬁc actions
+in an interleaved manner, allowing for greater synergy between the two: reasoning
+traces help the model induce, track, and update action plans as well as handle
+exceptions, while actions allow it to interface with and gather additional information
+from external sources such as knowledge bases or environments. We apply our
+approach, named ReAct , to a diverse set of language and decision making tasks
+and demonstrate its effectiveness over state-of-the-art baselines in addition to
+improved human interpretability and trustworthiness. Concretely, on question
+answering (HotpotQA) and fact veriﬁcation (Fever), ReAct overcomes prevalent
+issues of hallucination and error propagation in chain-of-thought reasoning by
+interacting with a simple Wikipedia API, and generating human-like task-solving
+trajectories that are more interpretable than baselines without reasoning traces.
+Furthermore, on two interactive decision making benchmarks (ALFWorld and
+WebShop), ReAct outperforms imitation and reinforcement learning methods by
+an absolute success rate of 34% and 10% respectively, while being prompted with
+only one or two in-context examples.
+1 I NTRODUCTION
+A unique feature of human intelligence is the ability to seamlessly combine task-oriented actions with
+verbal reasoning (or inner speech, Alderson-Day & Fernyhough, 2015), which has been theorized to
+play an important role in human cognition for enabling self-regulation or strategization (Vygotsky,
+1987; Luria, 1965; Fernyhough, 2010) and maintaining a working memory (Baddeley, 1992). Con-
+sider the example of cooking up a dish in the kitchen. Between any two speciﬁc actions, we may
+reason in language in order to track progress (“now that everything is cut, I should heat up the pot of
+water”), to handle exceptions or adjust the plan according to the situation (“I don’t have salt, so let
+me use soy sauce and pepper instead”), and to realize when external information is needed (“how do
+I prepare dough? Let me search on the Internet”). We may also act (open a cookbook to read the
+recipe, open the fridge, check ingredients) to support the reasoning and to answer questions (“What
+dish can I make right now?”). This tight synergy between “acting” and “reasoning” allows humans
+to learn new tasks quickly and perform robust decision making or reasoning, even under previously
+unseen circumstances or facing information uncertainties.
+Recent results have hinted at the possibility of combining verbal reasoning with interactive decision
+making in autonomous systems. On one hand, properly prompted large language models (LLMs)
+have demonstrated emergent capabilities to carry out several steps of reasoning traces to derive
+∗Work during Google internship. Projet page with code: https://react-lm.github.io/ .
+1arXiv:2210.03629v3  [cs.CL]  10 Mar 2023

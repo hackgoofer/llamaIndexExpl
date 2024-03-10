@@ -1,0 +1,883 @@
+3 2 0 2 c e D 7
+
+] L C . s c [
+
+1 v 1 1 5 4 0 . 2 1 3 2 : v i X r a
+
+An LLM Compiler for Parallel Function Calling
+
+Sehoon Kim*1
+
+Suhong Moon∗1 Ryan Tabrizi1 Nicholas Lee1
+
+Michael W. Mahoney1,2,3 Kurt Keutzer1 Amir Gholami1,2
+
+1 UC Berkeley
+
+2 ICSI
+
+3 LBNL
+
+{sehoonkim, suhong.moon, rtabrizi, nicholas lee, mahoneymw, keutzer, amirgh}@berkeley.edu
+
+Abstract
+
+Large Language Models (LLMs) have shown remarkable results on various complex reasoning benchmarks. The reasoning capabilities of LLMs enable them to execute function calls, using user-provided functions to overcome their inherent limitations, such as knowledge cutoffs, poor arithmetic skills, or lack of access to private data. This development has expanded LLMs’ scope to include multi-function calling, where LLMs are equipped with a variety of functions and select the proper functions based on the context. Multi-function calling abilities of LLMs have catalyzed LLM-based software development, allowing them to tackle more complex problems. However, current methods for multi-function calling often require sequential reasoning and acting for each function which can result in high latency, cost, and sometimes inaccurate behavior. To address this, we introduce LLMCompiler, which executes functions in parallel to efficiently orchestrate multi-function calling. Drawing from the principles of classical compilers, LLMCompiler streamlines parallel function calling in LLMs with three components: (i) an LLM Planner, formulating execution strategies and dependencies; (ii) a Task Fetching Unit, dispatching and updating function calling tasks; and (iii) an Executor, executing these tasks in parallel. With LLMCompiler, the user specifies the tools along with optional in-context examples, and LLMCompiler automatically computes an optimized orchestration for the function calls. Importantly, LLMCompiler can be used with open-source models such as LLaMA-2, as well as OpenAI’s GPT models. We have benchmarked LLMCompiler on a range of tasks that exhibit different types of parallel function calling, including cases with non-trivial inter-dependency between function calls, as well as cases that require dynamic replanning based on intermediate results. We observe consistent latency speedup of up to 3.7×, cost savings of up to 6.7×, and accuracy improvement of up to ∼9% as compared to ReAct. Additionally, due to our more efficient orchestration of multiple function calls, LLMCompiler achieves up to 1.35× latency gain over OpenAI’s recent parallel function calling feature, while achieving similar accuracy. Our code has been open-sourced.1
+
+1 Introduction
+
+Recent advancements in the reasoning capability of Large Language Models (LLMs) have expanded the applicability of LLMs beyond content generation to solving complex problems [57, 58, 64, 8, 56, 70, 12, 62, 18]; and recent works have shown how this reasoning capability could be helpful in improving accuracy for solving complex and logical tasks such as the Game of 24.2 The reasoning capability has also allowed function (also known as tool) calling capability. Here, the LLM can invoke the provided functions and use the function outputs to help it complete its task. These functions range from a simple calculator that the LLM can invoke for arithmetic operations to complex functions using LLMs to return their results. A practical use case would be a function that queries a knowledge source and summarizes the data before returning the results back to the LLM.
+
+The ability of LLMs to integrate various tools and coordinate multiple function calls could enable a fundamental shift in how we develop LLM-based software. However, this brings up an important challenge: what is the most effective approach to incorporate multiple function calls? A notable approach has been introduced in ReAct [65],
+
+Equal contribution 1https://github.com/SqueezeAILab/LLMCompiler 2In this problem, the LLM is given four numbers, and it is tasked with finding a set of math operations between them that end up with 24 as the final result. For this problem, even GPT-4 has a zero-shot accuracy of only 4%, whereas using Tree-of-Thoughts reasoning can increase the accuracy beyond 70% [64].
+
+1
+
+Tool invocation
+
+LLMThought: They are both American filmmakers.Action: finish(yes)
+
+Search ToolObservation: … Scott Derrickson (born July 16, 1966) is an American filmmaker …
+
+Search ToolObservation: … Scott Derrickson (born July 16, 1966) is an American filmmaker …
+
+Search ToolObservation: …Edward Wood Jr was an American filmmaker, actor, and …
+
+ExecutorStep
+
+LLM Planner$1 = search(Scott Derrickson)$2 = search(Ed Wood)
+
+DAG of tasks
+
+Tool invocation
+
+ReActLLMCompilerHotpotQAQuestion: Were Scott Derrickson and Ed Wood of the same nationality?
+
+Appended to prompt
+
+Appended to prompt
+
+Parallel tool invocations
+
+Latency Speedup: 1.8x
+
+LLMThought: I need to search Scott Derrickson.Action: search(Scott Derrickson)
+
+Search ToolObservation: …Edward Wood Jr was an American filmmaker, actor, and ….
+
+LLMThought: They are both American filmmakers.Action: finish(yes)
+
+LLMThought: I need to search Ed Wood.Action: search(Ed Wood)
+
+Figure 1: An illustration of the runtime dynamics of LLMCompiler, in comparison with ReAct [65], given a sample question from the HotpotQA benchmark [61]. In LLMCompiler (Right), the Planner first decomposes the query into a Directed Acyclic Graph (DAG) comprising of several tasks with inter-dependencies. The Executor then in parallel executes multiple tasks, respecting their dependencies in the DAG. Finally, LLMCompiler joins all observations from the tool executions to produce the final response. In contrast, sequential tool execution of the existing frameworks like ReAct (Left) leads to longer execution latency. In this example, LLMCompiler attains a latency speedup of 1.8× on the HotpotQA benchmark. While a 2-way parallelizable question from HotpotQA is presented here for the sake of simple visual illustration, LLMCompiler is capable of managing tasks with more complex dependency structures, as further demonstrated in Figure 2 and Sec. 4.
+
+where the LLM calls a function, analyzes the outcomes, and then reasons about the next action, which may involve a subsequent function call. A simple example is illustrated in Figure 1 (Left), where the LLM is asked if Scott Derrickson and Ed Wood have the same nationality (example from HotPotQA dataset [61]). In this case, ReAct initially analyzes the query and decides to use a search tool to gather information about Scott Derrickson. The result of this search (i.e., observation) is then concatenated back to the original prompt for the LLM to reason about the next action. Here, the LLM recognizes the need for further information about Ed Wood, invoking another use of the search tool. This new search result is also appended back to the prompt, enabling the LLM to arrive at the final answer.
+
+ReAct has been a pioneering work in enabling function calling, and it has been integrated into several frame- works [1, 37]. However, adapting this method for complex applications on a larger scale requires considerable op- timizations. This is due to the sequential execution behavior of ReAct, which serially executes function calls one by one and reasons about each observation before proceeding to the next. This approach, as well as the agent sys- tems [27, 64, 45, 46, 51] that adapt ReAct, may be inefficient in terms of latency and cost, particularly for complex applications that require many function calls. In particular, using ReAct’s sequential reasoning and action approach for these cases can lead to high latency and token consumption, since the results for each step need to be concatenated and sent back to the LLM for further reasoning, which may be unnecessary. Furthermore, while dynamically reasoning about the observations can be advantageous for certain cases, concatenating intermediate function results might affect the execution flow of the LLM, potentially reducing accuracy [60]. Common failure cases with such an approach can be repetitive generation of previous function calls, which is also highlighted in the original paper [65], and early stopping based on the partial intermediate results, as will be further discussed in Sec. 4.1.
+
+To address this challenge, we draw inspiration from classical compilers, where efficient instruction execution in traditional programming is a well-explored area. A key optimization technique in compilers involves the identifica- tion of instructions that can be executed in parallel and the effective management of their dependencies. Drawing inspiration from this concept, one can envision the need for a compiler tailored for LLM function calling, which can
+
+2
+
+efficiently orchestrate various function calls and handle their dependencies. This shares a similar philosophy to the recent studies that view LLMs as an operating system [26, 41]. To this end, we introduce LLMCompiler, a novel framework that enables parallel multi-tool execution of LLMs across different models and workloads. To the best of our knowledge, LLMCompiler is the first framework to specifically optimize the orchestration of multi-function call- ing of LLMs that can not only improve latency and cost, but also result in higher accuracy by minimizing interference from processing intermediate results. In more detail, we make the following contributions:
+
+We introduce LLMCompiler, an LLM compiler that optimizes the parallel function calling performance of LLMs. At a high level, this is achieved by introducing three key components: (i) an LLM Planner (Sec. 3.1) that identifies an execution flow from user inputs that defines different function calls with their dependencies; (ii) a Task Fetching Unit (Sec. 3.2) that dispatches the function calls which can be executed in parallel after substituting variables with the actual outputs of the preceding tasks; and (iii) an Executor (Sec. 3.3) that executes the dispatched function calling tasks using the associated tools. See Figure 2 and Sec. 3 for the detailed system overview.
+
+We extensively evaluate the accuracy and latency (Table 1) as well as token usage (Table 2) of LLMCompiler on a range of problems with different types of function calling patterns. LLMCompiler can be used in conjunction with open-source LLMs, such as LLaMA-2, demonstrating its effectiveness in empowering open-source models with the capability to efficiently handle multiple function calling. LLMCompiler can also be beneficial for GPT models. Our results show latency improvements of up to 1.35× as compared to OpenAI’s parallel function calling capability which was released concurrently to our work.
+
+We test LLMCompiler on various tasks that exhibit different patterns of parallel function calling:
+
+We evaluate LLMCompiler on embarrassingly parallel function calling patterns using the HotpotQA [61] and Movie Recommendation [7] benchmarks, which are two-way and eight-way parallelizable, respectively. We observe 1.80×/3.74× speedup and 3.37×/6.73× cost reduction for each dataset, as compared to ReAct (Sec. 4.1).
+
+To test the performance on more complex function calling patterns, we have created a new dataset called Paral- lelQA which includes parallel function calls with different types of dependencies between the tasks (Figure 3). The results given in Table 1 exhibit a similar trend with up to 2.27× speedup and 4.65× cost reduction com- pared to ReAct, as well as ∼9% improved accuracy using the LLaMA-2 model (Sec. 4.2).
+
+We evaluate LLMCompiler’s capability in supporting function calling patterns that require dynamic replan- ning, which is achieved through a feedback loop from the Executor back to our LLM Planner. For the Game of 24 challenge [64], which requires repeated replanning based on the intermediate results, LLMCompiler demonstrates a 2× speedup, compared to Tree-of-Thoughts (Sec. 4.3).
+
+2 Related Work
+
+2.1 Latency Optimization in LLMs
+
+Various studies have focused on optimizing model design [28, 17, 36, 14, 30, 16, 29, 10, 33] and systems [31, 66, 2, 3] for efficient LLM inference. Optimizations at the application level, however, are less explored. This is critical from a practical point of view for situations involving black-box LLM models and services where modifications to the models and the underlying inference pipeline are highly restricted.
+
+Skeleton-of-Thought [39] recently proposed to reduce latency through application-level parallel decoding. This method involves a two-step process of an initial skeleton generation phase, similar to our planning stage, followed by parallel execution of skeleton items. However, it is primarily designed for embarrassingly parallelizable workloads and does not support problems that have inherently interdependent tasks, as it operates under the assumption of having no dependencies between skeleton tasks. This limits its applicability in complex scenarios such as coding [11, 38, 20, 6] or math [22, 21] problems, as also stated in their paper [39]. LLMCompiler addresses this by translating an input query into a series of tasks with inter-dependencies, thereby expanding the spectrum of problems it can handle.
+
+Concurrently to our work, OpenAI has recently introduced a feature called parallel function calling [4] in their 1106 release. This enables the simultaneous generation of multiple function calls, thereby addressing user queries more efficiently. Despite its potential for reducing LLM execution time, this feature has certain limitations. Parallel function calling is exclusively available for OpenAI’s proprietary GPT models, whereas there is a growing demand for using open-source models. Such growth is particularly driven by the increasing number of open-source LLMs [54, 53, 25, 15,
+
+3
+
+68, 5, 13, 9], with different capabilities and applications, as well as parameter-efficient training techniques [32, 24, 23] for finetuning and customizing. LLMCompiler enables efficient parallel function calling for open-source models, and also, as we will show later in Sec. 4, it can potentially achieve better latency as compared to OpenAI’s recent parallel function calling capability.
+
+2.2 Tool-Augmented LLMs
+
+Early applications of LLMs were limited to language understanding and generation tasks. However, the reasoning capability of LLMs enabled exploring LLMs as independent agents, each of which can carry a different task. This concept was then expanded to function calling capability where the LLM could even specify the function’s arguments. Notable works here include the early work of [47], which produced a custom LLM output format that would be parsed to perform LLM information retrieval. The key here was that the LLM decided what the inputs for calling the functions should be, as well as where to insert the result. Subsequent work [35, 48] developed frameworks for calling many different external APIs to support allowing these agents to execute complex tasks. ReAct [65] presented a study where LLMs interact with external environments using an API, integrating reasoning and action generation for improved performance in various tasks such as QA, fact verification, and decision-making benchmarks [61, 52, 49, 63]. Gorilla [43] is a finetuned LLM designed to translate natural language input to function calls given documentation for the APIs, aiming to allow LLMs to retrieve and update documentation when they change. In an effort to simulate and evaluate on real-world API calls, Toolbench [45] and API-Bank [34] introduced benchmarks and datasets for tool- augmented LLMs in different domains. RestGPT [50] extended LLMs to support REST APIs, which allows them to interact with web services and clients. Moreover, OpenAI [40] released their own function calling capabilities within their API, allowing their LLMs to return formatted JSON for execution.
+
+2.3 Plan and Solve Strategy
+
+Several studies [27, 59, 69, 42, 44, 70, 19, 55] have explored prompting methods of breaking down complex queries into various levels of detail to solve them, thereby improving LLM’s performance in reasoning tasks. Specifically, Decomposed Prompting [27] is the method to tackle complex tasks by decomposing them into simpler sub-tasks, each optimized through dedicated prompting-based LLMs. Step-Back Prompting [69] presented the LLM prompt allowing LLMs to abstract high-level concepts from details, significantly enhancing reasoning abilities across various tasks. Adding to this, Plan-and-Solve Prompting [55] segments multi-step reasoning tasks into subtasks to minimize errors and improve task accuracy without manual prompting. However, note that these methods primarily focus on improving the accuracy on reasoning benchmarks. In contrast, LLMCompiler uses a planner to identify parallelizable patterns within queries, aiming to reduce latency while maintaining accuracy.
+
+A notable work is ReWOO [60] which employs a planner to separate the reasoning process from the execution and observation phases, aiming to decrease token usage and cost as compared to ReAct. Our approach is different from ReWOO in multiple aspects. First, LLMCompiler allows parallel function calling which can reduce latency as well as cost. Second, LLMCompiler supports dynamic replanning which is important for problems whose execution flow cannot be determined statically in the beginning (Sec. 4.3).
+
+3 Methodology
+
+To illustrate the system components of LLMCompiler, we begin with a simple 2-way parallel example shown in Fig- ure 2. Consider the user question, “How much does Microsoft’s market cap need to increase to exceed Apple’s market cap?” To answer this question, the LLM first needs to perform web searches to find the market cap of Apple and Microsoft, and then divide Apple’s market cap by that of Microsoft. While the existing frameworks, including ReAct, perform these tasks in a sequential, one-at-a-time manner, it is evident that the two search queries can be executed in parallel. The important question is how to automatically detect which tasks can be performed in parallel and which ones are interdependent, and then to orchestrate the execution of the different tasks accordingly. LLMCompiler accomplishes this through a system that consists of the following three components: an LLM Planner component that generates the sequence of the different tasks and their dependencies; a Task Fetching component that dynamically determines which set of tasks could be executed and performs necessary argument replacements based on intermedi- ate results; and an Executor component which executes the necessary function calls given by the Task Fetching part. These components are discussed in more detail below.
+
+4
+
+search
+
+Tool
+
+Tool
+
+Tool
+
+Tool
+
+User Input“How much does Microsoft's market cap need to increase to exceed Apple's market cap?”
+
+llm
+
+math
+
+Function Calling Units
+
+$1 = search(Microsoft Market Cap)$2 = search(Apple Market Cap)$3 = math($1 / $2)$4 = llm($3)LLM PlannerDAG of TasksExecutor
+
+Task Fetching Unit
+
+…
+
+Memory
+
+Memory
+
+Memory
+
+Memory
+
+FetchesTask
+
+Resolves Dependency
+
+Tools
+
+Figure 2: Overview of the LLMCompiler framework: the workflow from initial user input to task execution. Be- ginning with user input, the LLM Planner generates a sequence of tasks with their inter-dependencies. These tasks are then dispatched by the Task Fetching Unit to the Executor based on their dependencies, thus allowing for their parallel executions. For instance, in this example, Task $1 and $2 are fetched together for parallel execution of two independent search tasks. After each task is performed, the results (i.e., observations) are forwarded back to the Task Fetching Unit to unblock the dependent tasks after replacing their placeholder variables (e.g., the variable $1 and $2 in Task $3) with actual values. Once all tasks have been executed, the final answer is delivered to the user.
+
+3.1 LLM Planner
+
+At a high level, the LLM Planner is responsible for generating a sequence of tasks to be executed along with any dependency among them. For instance, Tasks $1 and $2 in Figure 2 that search for the “Microsoft Market Cap” and “Apple Market Cap” can be performed in parallel. However, Task $3 that divides the two market cap values has a dependency on the outcomes of the first and second searches. Therefore, the Planner’s role is to automatically identify the necessary tasks, their input arguments, as well as the dependencies between them using the sophisticated reasoning capability of LLMs, essentially forming a Directed Acyclic Graph (DAG) of task dependencies. If a task is dependent on a preceding task, it incorporates a placeholder variable, such as $1 in Task 3 of Figure 2. This variable is then substituted with the actual output from the preceding task upon completion by the Task Fetching Unit, as will be further outlined in Sec. 3.2.
+
+Given natural language inputs like the one illustrated in Figure 2, the Planner needs to leverage the reasoning capability of LLMs for task decomposition. As demonstrated in Sec. 4, options for this LLM Planner include the GPT models (version 3.5 or 4) and the LLaMA-2 model. LLMCompiler is equipped with a pre-defined prompt for the Planner LLM that provides it with specific instructions on how to break down tasks and generate dependency graphs while ensuring that these tasks are formatted precisely. As further detailed in Appendix A.4, this prompt contains rules such as assigning each task to a new line, beginning each task with a numerical identifier, and using the $ sign to denote intermediate variables that need to be later replaced upon the completion of preceding tasks.
+
+Besides this pre-defined prompt for the Planner that ensures its correct semantics, users are also required to provide tool definitions and in-context examples for the Planner. These examples provide detailed demonstrations of how the tasks need to be decomposed and executed for a specific problem, from which the Planner can learn the rules. The details regarding the user-supplied information for LLMCompiler are discussed in more detail in Sec. 3.5.
+
+3.2 Task Fetching Unit
+
+The Task Fetching Unit, inspired by the instruction fetching mechanism in contemporary computer architectures, determines the optimal execution flow of the tasks based on the intermediate representation generated by the Planner. Adopting a greedy policy, this unit fetches tasks to the Executor as soon as they are ready for (parallel) execution, similar to how instructions are fetched in multi-core CPUs. Another key functionality of the Task Fetching Unit is to replace variables with the actual outputs from preceding tasks, which were initially set as placeholders by the Planner. For the example in Figure 2, the variable $1 and $2 in Task $3 would be replaced with the actual market cap of Microsoft and Apple and serve as an argument to the math task. For the examples that we consider in this paper, this greedy policy can be implemented with a simple fetching and queue mechanism without a dedicated LLM.
+
+5
+
+3.3 Executor
+
+The Executor asynchronously executes tasks fetched from the Task Fetching Unit. As the Task Fetching Unit guar- antees all the tasks dispatched to the Executor are independent, the Executor can simply execute them concurrently. The Executor is equipped with the tools that the user provides, and it delegates the task to the associated tool. These tools can be simple functions like a calculator, Wikipedia search, or API calls, or they can even be LLM agents that are tailored for a specific task. For a practical application example, consider a scenario that involves gathering information from various sources. An example could involve summarizing interactions with a particular company by retrieving data from sales records, email communications, and meeting transcripts. Each of these tasks can be handled in parallel using an LLM, whose results can be subsequently combined through a join operation to produce a final summary.
+
+As depicted in the Executor block of Figure 2, each task has dedicated memory to store its intermediate outcomes, similar to what typical sequential frameworks do when aggregating observations as a single prompt [65]. Upon completion of the task, the final results (i.e., observations) are forwarded as input to the tasks dependent on them.
+
+3.4 LLMCompiler Details
+
+3.4.1 Streamed Planner
+
+The Planner may incur a non-trivial overhead for user queries that involve a lot of tasks to be executed. This is because the Planner operates as a blocking call since both the Task Fetching Unit and the Executor must wait for its output before initiating their processes. However, this can be mitigated by enabling the Planner to asynchronously stream the dependency graph, analogous to instruction pipelining in modern computer systems. This method allows each task to be immediately processed by the Task Fetching Unit and forwarded to the Executor as soon as all of its dependencies are resolved. In Appendix. A.2.2, we show that this streaming approach can result in up to 30% improved latency.
+
+3.4.2 Dynamic Replanning
+
+In various applications, the execution graph may need to adapt based on intermediate results that are a priori unknown. A similar analogy in programming is branching, where the path of execution is determined only during runtime, depending on which branch conditions are satisfied. Such dynamic execution patterns can also appear with LLM function calling. For simple branching (e.g., if-else statements) one could statically compile the execution flow and choose the right dynamically based on the intermediate results. However, for more complex branching it may be better to do a recompilation or replanning based on the intermediate results. We show an example use case of this in Sec. 4.3 for solving the Game of 24 using the Tree-of-Thoughts approach.
+
+In replanning, the Executor sends the intermediate results back to our LLM Planner. Based on that, the Planner produces a new set of tasks with their associated dependencies and dispatches them to the Task Fetching Unit and then the Executor. This process is repeated until the final result is achieved.
+
+3.5 User-Supplied Information
+
+The details of Figure 2 are abstracted away from the user as LLMCompiler can automatically identify and execute the optimal parallel execution flow. From the user’s perspective, only the following is required to use LLMCompiler:
+
+1. Tool Definitions: Users need to specify the tools that LLMs can use, including their descriptions and argument specifications. Optionally, users can also provide in-context examples demonstrating the usage of these tools. This is essentially the same requirement as other frameworks like ReAct and OpenAI function calling [65, 4].
+
+2. In-context Examples for the Planner: Optionally, users can provide LLMCompiler with examples of how the Planner should behave. For instance, in the case of Figure 2, users may provide examples illustrating expected inter-task dependencies for certain queries. Such examples can aid the Planner LLM in generating the appropriate dependency graph in the correct format for incoming inputs. In Appendix A.3, we include the examples that we used in our evaluation (Sec. 4).
+
+6
+
+outputAnalyze Apple and Microsoft's latest 10-K form and compare their sales forecast.(a)(b)(c)
+
+search
+
+math
+
+search
+
+search
+
+search
+
+search
+
+search
+
+search
+
+math
+
+mathWhich has higher total healthcare expenses, Florida or New York, considering both public and private sectors?
+
+Analyzer Agent
+
+mathIf Stanford and UCLA were to merge, would they have more Nobel laureates than UC Berkeley?
+
+output
+
+output
+
+Analyzer Agent
+
+math
+
+Figure 3: Examples of questions with different function calling patterns and their dependency graphs within the LLMCompiler framework. HotpotQA and Movie Recommendation datasets exhibit pattern (a), and ParallelQA dataset includes examples from patterns (b) and (c), among other patterns. In (a), we need to analyze each company’s latest 10-K. In (b), we need three searches for each school, followed by one addition and one comparison operation. In (c), we need to search for each state’s annual healthcare spending in each sector, sum each state’s spending, and then perform a comparison.
+
+4 Results
+
+In this section, we evaluate LLMCompiler using a variety of models and problem types. We use both the proprietary GPT models and the open-source LLaMA-2 model, with the latter demonstrating LLMCompiler’s capability in en- abling parallel function calling in open-source models. Furthermore, there are various types of parallel function calling patterns that can be addressed with LLMs. This ranges from embarrassingly parallel patterns, where all tasks can be executed in parallel without any dependencies between them, to more complex dependency patterns, as illustrated in Figure 3. Significantly, we also assess LLMCompiler on Game of 24 benchmark involving dynamic replanning based on intermediate results, highlighting its adaptability to evolving dependency graphs. In this section, we start presenting results for simple execution patterns, and then we move to more complex ones.
+
+4.1 Embarrassingly Parallel Function Calling
+
+The simplest scenario is when an LLM repeatedly uses a tool for independent tasks such as conducting parallel searches to gather information on different topics. Given that these tasks are independent of each other, they can be executed in parallel. The dependency graph for this pattern is depicted in Figure 3 (a), in which two agents are called in parallel on separate entities to perform financial analysis. In the example, the LLM has to call the agent twice to perform financial analysis on each company, and then it must compare the results to answer the query. ReAct, along with other LLM solutions as they stand, would need to sequentially (i.e., one at a time) evaluate each entity, leading to increased latency. This approach also leads to higher token consumption. This is due to its frequent LLM invocations for each tool usage, with prior observations being continuously added to the input prompt, as shown in Figure 1. LLMCompiler, however, identifies the parallelizable pattern and executes each agent concurrently to provide the LLM with all details needed to make the final decision. We use the following two datasets to benchmark the function calling performance:
+
+HotpotQA [61]: a dataset originally designed to evaluate the AI model’s multi-hop reasoning capabilities. We only use the comparison dev set from this dataset, which comprises 1.5k questions that draw comparisons between two different entities. HotpotQA comparison subset, therefore, has a 2-way embarrassingly parallel execution pattern. An example question, “Were Scott Derrickson and Ed Wood of the same nationality?” is demonstrated in Figure 1.
+
+Movie Recommendation [7]: a dataset comprised of 500 examples where the LLM is tasked with selecting which of four movie options is most similar to another set of four movies. This dataset presents an 8-way embarrassingly parallel execution pattern, as it requires simultaneous searches across all eight movies before drawing a conclusion.
+
+Experimental Setups. As a baseline method, we compare LLMCompiler with ReAct. We follow the ReAct [65] setup using the same Wikipedia search tool that LLMs can use to search for information. We did not include the
+
+7
+
+lookup tool since it is not relevant to our problem setting. We have optimized the prompt and in-context examples for both ReAct and LLMCompiler to the best of our abilities. For all experiments across these datasets, we use gpt-3.5-turbo, specifically the 1106 release version. Additionally, for the experiments using GPT, we report the results using OpenAI’s parallel function calling capability, which was announced concurrently with our work. We also show how LLMCompiler can be effectively combined with the open-source LLaMA-2 70B model to provide the model with parallel function calling capabilities. For all experiments, we have measured accuracy, end-to-end latency, as well as input and output token usage. See A.1 for more details on experimental setups.
+
+Accuracy and Latency. We report the accuracy, end-to-end latency, and speed-up values of LLMCompiler com- pared to ReAct in Table 1. First, we observe that ReAct consistently achieves lower accuracy compared to OpenAI parallel function calling and LLMCompiler. We identify two main failure modes in ReAct: (1) the tendency for re- dundant generation of prior function calls a point also noted in the original ReAct paper [65]; and (2) premature early stopping based on the incomplete intermediate results. Note that the authors of the ReAct [65] highlighted that ReAct is very rigid and expects cohesive answers at each thought-action-observation step. In contrast, both OpenAI parallel function calling and LLMCompiler introduce a more flexible approach by separating the processes of reasoning and multi-function calling. To validate these observations, we conducted interventional experiments in which we incor- porated ReAct-specific prompts into the original ReAct prompt to avoid repetitive function calls and early stopping; upon doing so, we observe less of ReAct’s erroneous behavior. ReAct† in Table 1 refers to ReAct when it is modified with this ReAct-specific prompt. Furthermore, we observe a general accuracy improvement with ReAct† as compared to the original ReAct in both HotpotQA and Movie Recommendation benchmarks. Nevertheless, LLMCompiler demonstrates on-par and better accuracy than ReAct† by up to 7% for Movie Recommendation, where we observe particularly frequent early stopping even with the ReAct-specific prompts.
+
+Additionally, when compared to ReAct†, LLMCompiler demonstrates a noticeable speedup of 1.80× and 1.40× on the HotpotQA benchmark with GPT and LLaMA, respectively. Similarly, LLMCompiler demonstrates 3.74× and 2.82× speedup on the Movie Recommendation benchmark with each model. Note that we benchmark the latency of LLMCompiler against that of ReAct† since the repeating and early stopping behavior of the original ReAct as discussed above makes its latency unpredictable and unsuitable for a fair comparison. LLMCompiler demonstrates a speedup of up to 35% compared to OpenAI parallel function calling, which is 1.61× and 2.76× on each benchmark compared to ReAct. Unfortunately, we are unable to conclude why this is the case, as OpenAI has not publicly dis- closed any details about their function calling mechanism. One speculation is that the tool definitions are transformed and added back to the system prompt behind the scenes, where additional overheads might have been added for val- idating the function and argument names. Nevertheless, we have seen a consistent trend with multiple runs repeated over several days.
+
+Costs. Another important consideration when using LLMs is cost, which depends on the input and output token usage. The costs for GPT experiments are provided in Table 2. LLMCompiler is more efficient than ReAct with respect to cost, which requires frequent LLM invocations for each tool usage, as illustrated in Figure 1. Interestingly, LLMCompiler also outperforms the recent OpenAI parallel function calling in cost efficiency, for two main reasons. First, LLMCompiler’s planning phase is more efficient in prompt length since our Planner’s in-context examples only need to include plans, not observations. Second, LLMCompiler detects the dependency pattern only in the beginning, removing repetitive LLM calls used to identify new dependencies upon completing ongoing function calls. This becomes particularly evident in workloads with more complex dependency patterns, such as those in Figure 3 (b) and (c). For instance, in Figure 3 (c), OpenAI’s parallel function calling would require separate LLM calls to identify the initial search tasks, subsequent math tasks, and then the final math task, since it can only output a set of parallelizable tasks at each step. We explore parallel function calling with more complex dependencies in more detail in Sec. 4.2.
+
+4.2 Parallel Function Calling with Dependencies
+
+The cases considered above are rather simple, as only one tool is used and all tasks can be executed independently of one another. However, similar to code execution in traditional code blocks, we may encounter function calling scenarios that involve more complex dependencies. To systematically evaluate the capability to plan out function calling in scenarios that involve complex task dependencies, we have designed a custom benchmark called ParallelQA. This benchmark is designed to incorporate non-trivial function calling patterns, including three different types of
+
+8
+
+Table 1: Accuracy and latency comparison of LLMCompiler compared to the baseline on different benchmarks, including HotpotQA [61], Movie Recommendation [7], our custom dataset named ParallelQA, and Game of 24 [39]. For HotpotQA and Movie Recommendation, we frequently observe looping and early stopping (Sec. 4.1). We in- corporated ReAct-specific prompting to minimize these behaviors as much as possible. The term ReAct† denotes ReAct modified with this ReAct-specific prompt. ReAct indicates the original results without this prompting. We do not include the latency for the original ReAct since looping and early stopping make precise latency measurement difficult.
+
+Benchmark
+
+Method
+
+GPT (Closed-source)
+
+LLaMA-2 70B (Open-source)
+
+Accuracy (%)
+
+Latency (s)
+
+Speedup
+
+Accuracy (%)
+
+Latency (s)
+
+Speedup
+
+HotpotQA
+
+ReAct ReAct† OAI Parallel Function LLMCompiler
+
+61.52 62.47 62.05 62.00
+
+7.12 4.42 3.95
+
+1.00× 1.61× 1.80×
+
+50.48 52.25 - 55.28
+
+13.44 - 9.58
+
+1.00× - 1.40×
+
+Movie Rec.
+
+ParallelQA
+
+ReAct ReAct† OAI Parallel Function LLMCompiler
+
+ReAct OAI Parallel Function LLMCompiler
+
+45.93 70.60 77.00 77.60
+
+89.09 87.32 89.38
+
+20.47 7.42 5.47 35.90 19.29 16.69
+
+1.00× 2.76× 3.74× 1.00× 1.86× 2.15×
+
+73.20 73.00 - 74.40
+
+59.59 - 68.14
+
+33.37 - 11.83 15.47 - 26.20
+
+1.00× - 2.82× 1.00× - 2.27×
+
+Game of 24
+
+Tree-of-Thoughts LLMCompiler
+
+74.00 75.33
+
+241.2 83.6
+
+1.00× 2.89×
+
+30.00 32.00
+
+952.06 456.02
+
+1.00× 2.09×
+
+Table 2: Input and output token consumption as well as the estimated cost on HotpotQA [61], Movie Recommen- dation [7], and our custom dataset named ParallelQA. The cost is computed based on the pricing table of the GPT models used for each benchmark.
+
+Benchmark
+
+Method
+
+In. Tokens
+
+Out. Tokens
+
+Cost ($/1k)
+
+Cost Red.
+
+HotpotQA
+
+ReAct OAI Parallel Function LLMCompiler
+
+2900 2500 1300
+
+120 63 80
+
+5.00 2.66 1.47
+
+1.00× 1.87× 3.37×
+
+Movie Rec.
+
+ReAct OAI Parallel Function LLMCompiler
+
+20000 5800 2800
+
+230 160 115
+
+20.46 6.14 3.04
+
+1.00× 3.33× 6.73×
+
+ParallelQA
+
+ReAct OAI Parallel Function LLMCompiler
+
+46000 25000 9200
+
+470 370 340
+
+480 260 103
+
+1.00× 1.81× 4.65×
+
+patterns in Figure 3 (b) and (c). Inspired by the IfQA benchmark [67], ParallelQA contains 113 examples that involve mathematical questions on factual attributes of various entities. In particular, completing the task requires using two tools (i.e., search and math tools), with the second tool’s argument depending on the result of the first tool’s output. We have meticulously included questions that are only answerable with information from Wikipedia’s first paragraph, effectively factoring out the failure cases due to unsuccessful searches. Furthermore, to increase problem complexity, we include varying numbers of joins between parallel function calls. For instance, we have 2 and 3 joins in Figure 3 (b) and (c), respectively. The benchmark contains examples with 2, 3, 4, and 5 maximum parallelizable operations so that we can assess the impact of the number of parallel operations on the overall latency enhancement of LLMCompiler compared to the sequential baseline.
+
+Similar to Sec. 4.1, ReAct executes these dependency graphs sequentially, continuously adding observations to the prompt and invoking the LLM for each function call. In contrast, LLMCompiler plans out the dependency graph in one shot and dispatches tasks in parallel based on their inter-dependencies, enhancing both the latency and cost efficiency of the execution.
+
+9
+
+Experimental Setups. Similar to Sec. 4.1, we use ReAct [65] as the main baseline. Here, both ReAct and LLMCompiler are equipped with two tools: (1) the search tool, identical to the one mentioned in Sec.4.1; and (2) the math tool, which solves mathematical problems. The math tool is inspired by the Langchain [1]’s LLMMathChain, which uses an LLM as an agent that interprets input queries and invokes the numexpr function with the appropriate formula. This enables the math chain to address a broad spectrum of math problems that are written both in mathematical and verbal form. For all experiments using OpenAI GPT, we use gpt-4-turbo, i.e., the 1106-preview release version. See A.1 for more details on experimental setups.
+
+30
+
+ReAct
+
+50Latency (s)
+
+10
+
+4
+
+3
+
+0
+
+LLMCompiler (Ours)
+
+5Number of Parallelizable Tasks
+
+Latency vs. # Parallelizable Tasks
+
+20
+
+2
+
+40
+
+Accuracy and Latency. As shown in the ParallelQA row of Table 1, LLMCompiler arrives at the final answer with an average speedup of 2.15× with gpt-4-turbo and 2.27× with LLaMA-2 70B. Beyond the latency speedup, we observe higher accuracy of LLMCompiler with the LLaMA-2 model as compared to that of ReAct, due to the reasons discussed in Sec. 4.1.
+
+We also report a more detailed latency breakdown in Figure 4, where we show the end-to-end latency as a function of the number of parallel tasks. This is often referred to as weak-scaling in high- performance computing, where the ideal behavior is to have a constant latency as the number of tasks is increased. We can see that ReAct’s latency increases proportionally to the number of tasks which is ex- pected as it executes the tasks sequentially. In contrast, the latency of LLMCompiler increases at a much smaller rate as it can perform multiple function calls in parallel when possible. The reason the end- to-end latency increases slightly with LLMCompiler is due to the overhead of the Planner, which needs to generate plans initially, and which cannot be parallelized. We further analyze this in Appendix A.2.1.
+
+Figure 4: Latency on the ParallelQA bench- mark grouped by the number of maximum parallelizable tasks.
+
+4.3 Parallel Function Calling with Replanning
+
+In the previous sections, we have discussed cases in which dependency graphs can be determined statically. However, there are cases where dependency graphs need to be constructed dynamically depending on intermediate observations. Here, we consider one such dynamic approach in the context of the Game of 24 with the Tree-of-Thoughts (ToT) strategy proposed in [64]. The Game of 24 is a mathematical reasoning game that challenges players to manipulate a given set of four numbers, using the basic arithmetic operations of addition, subtraction, multiplication, and division, to arrive at the number 24. The rule of this game is that the given numbers must be used only once. For instance, given the numbers 2, 4, 4, and 7, one possible solution is 4 × (7 − 4) × 2 = 24. This is a non-trivial reasoning benchmark for LLMs, highlighted by the fact that even advanced models like GPT-4 exhibit only a 4% success rate, even when using chain-of-thought prompting [64].
+
+In ToT, the problem is solved in several steps. At each step, the LLM, referred to as the thought proposer, generates thoughts. Each thought is a partial solution that consists of two numbers and an arithmetic operation between them. Then, these thoughts are fed into the state evaluator which assigns a label for each of them. These labels are ‘sure’, ‘likely’, and ‘impossible’, which are given to thoughts to denote how likely they could produce 24 with additional arithmetic operations between the result and the remaining numbers. Only the thoughts that are likely to produce 24 continue onto the next step. This process is illustrated in Figure 5.
+
+While ToT achieves significant improvement at solving the Game of 24, it is rather slow since it traverses the nodes in the tree sequentially. LLMCompiler can accelerate ToT by parallelizing the different phases. This is achieved by performing the thought proposals for each stage and their subsequent feasibility evaluation in parallel. This approach is somewhat similar to parallel beam search in which at each stage we evaluate all thought proposals in parallel and continue with the top-5 combinations based on the state evaluator which is also executed in parallel. Below we provide more details about the experiment setup.
+
+Experimental Setups. To evaluate LLMCompiler’s performance on the Game of 24, we consider 100 different instances of the game. For each problem, we consider the output as successful if its operations are valid and yield 24 while also using the provided numbers exactly once each. The success rate over 100 games is reported as the metric.
+
+10
+
+7/2=3.5(left: 3.5, 4, 4)
+
+Thought ProposerInput: 2, 4, 4, 7Possible next steps:
+
+4*6=24(left: 24)
+
+4/2=2(left: 2, 3)
+
+7-4=3(left: 2, 3, 4)
+
+4-2=2(left: 2, 3)
+
+Input: 2, 4, 4, 7
+
+2*3=6(left: 4, 6)
+
+4+4=8(left: 2, 7, 8)
+
+State EvaluatorEvaluate if given numbers can reach 24 (sure/likely/impossible)
+
+Figure 5: Visualization of the Tree of Thoughts (ToT) in the Game of 24. Each node represents a distinct proposal, beginning with the root node and branching out through the application of single operations by the thought proposer. Subsequent states are evaluated by the state evaluator for their potential to reach the target number 24. The ToT retains the top-5 states according to their values.
+
+We also equip LLMCompiler with 3 tools to handle this problem: thought proposer; state evaluator; and top k select. The first two, thought proposer and state evaluator, are LLMs directly derived from the ToT framework, implemented following the official codebase.3 The third, top k select, is a tool that ranks the candidate proposals from thought proposer based on state evaluator’s evaluation, selecting the top k states for further branching out. A chain of these three tools forms a graph that proposes multiple candidate proposals and selects the most promising ones. After all tasks are executed, LLMCompiler can decide to “re- plan” if none of the proposals achieves the target number 24. This triggers the Planner to create new plans using the states shortlisted by top k select in the previous step. Such replanning capability is an essential feature of the LLMCompiler framework in supporting dynamic dependency graphs. Since thought proposer can only generate new states based on the previous outputs of top k select, it is impractical to create a single static DAG beyond this point without the actual execution results of top k select. Therefore, LLMCompiler dynamically regenerates plans for each tree search step, equipping LLMCompiler with the capability to tackle highly complex tasks that require iterative replanning based on the outcomes of previous plans. Further details on experiment setups are outlined in Appendix A.1.
+
+Success Rate and Latency In the last two rows of Table 1, we explore the latency and success rate of LLMCompiler in comparison to the baseline described in [64] on the Game of 24 benchmark. With the GPT-4 model, LLMCompiler demonstrates a 2.89× enhancement in latency while slightly improving the success rate compared to the baseline. Similarly, when applied with the LLaMA-2 model, LLMCompiler shows a 2.01× improvement in latency, again without compromising on success rate. These results demonstrate not only a significant latency reduction without quality degradation, but also the replanning capability of LLMCompiler for solving complex problems.
+
+5 Conclusions
+
+The reasoning capability of LLMs has enabled integrating function calling and tool usage which has significantly expanded the scope of applications that can benefit from LLMs. Notably, there are now efforts to extend this further by considering an operating systems paradigm for LLMs [26, 41], which could pave the way for building large- scale LLM-based software. However, the current approaches for invoking multiple functions with an LLM need to be optimized to make them suitable for large-scale and complex tasks. In particular, the popular method of ReAct incorporates multiple function calls by a dynamic reasoning and action method in which each function call needs to be executed serially and reasoned about before proceeding to the next function call. While this approach could be suitable for dynamic reasoning use cases, it is inefficient in terms of latency, token usage, and cost, as well as potentially leading to sub-optimal accuracy. This is especially the case where multiple function calls can instead be performed in parallel.
+
+3https://github.com/princeton-nlp/tree-of-thought-llm
+
+11
+
+To address this, we introduced LLMCompiler, a framework that allows the efficient orchestration of parallel function calling with LLMs, including both open-source models such as LLaMA-2 as well as OpenAI’s GPT models. Inspired by the classical compiler, LLMCompiler automatically decomposes user inputs into a series of tasks along with their inter-dependencies, allowing for parallel tasks to be executed simultaneously. This is achieved through three core components within our framework: (i) the LLM Planner that generates an execution flow from user inputs that comprises different function calls and their dependencies; (ii) the Task Fetching Unit that dispatches the function calls that can be executed after replacing the variables with the actual outputs of the preceding tasks; and (iii) the Executor that executes the tasks given by the Task Fetching Unit in parallel with the associated tools. We have benchmarked LLMCompiler on a range of tasks that exhibit different types of parallel function calling, including cases with non-trivial inter-dependency between function calls, as well as cases that require dynamic replanning based on intermediate results. We observe consistent latency speedup of up to 3.7×, cost savings of up to 6.7×, and accuracy improvement of up to ∼9% as compared to ReAct. Additionally, due to our more efficient orchestration of multiple function calls, LLMCompiler achieves up to 1.35× latency gain over OpenAI’s recent parallel function calling feature, while achieving similar accuracy.
+
+As for future work, it would be interesting to explore LLMCompiler in conjunction with the ongoing works In particular, the incorporation of parallel function calling
+
+adopting an operating systems perspective for LLMs. capability could pave the way for executing complex, large-scale tasks using LLMs efficiently and accurately.
+
+Acknowledgements
+
+We acknowledge gracious support from Furiosa team. Furthermore, we appreciate support from Google Cloud, the Google TRC team, and specifically Jonathan Caton, and Prof. David Patterson. Prof. Keutzer’s lab is sponsored by the Intel corporation, Intel One-API, Intel VLAB team, the Intel One-API center of excellence, as well as funding through BDD and BAIR. We also appreciate support from Samsung including Dongkyun Kim, and David Thorsley. We appreciate great feedback and support from Ellick Chan, Saurabh Tangri, Andres Rodriguez, and Kittur Ganesh. Sehoon Kim and Suhong Moon would like to acknowledge the support from the Korea Foundation for Advanced Studies (KFAS). Amir Gholami was supported through funding from Samsung SAIT. Michael W. Mahoney would also like to acknowledge a J. P. Morgan Chase Faculty Research Award as well as the DOE, NSF, and ONR. Our conclusions do not necessarily reflect the position or the policy of our sponsors, and no official endorsement should be inferred.
+
+References
+
+[1] https://github.com/langchain-ai/langchain.
+
+[2] https://github.com/nvidia/tensorrt-llm.
+
+[3] https://huggingface.co/text-generation-inference.
+
+[4] New models and developer products announced at devday.
+
+[5] Alex Andonian, Quentin Anthony, Stella Biderman, Sid Black, Preetham Gali, Leo Gao, Eric Hallahan, Josh Levy-Kramer, Connor Leahy, Lucas Nestler, Kip Parker, Michael Pieler, Jason Phang, Shivanshu Purohit, Hailey Schoelkopf, Dashiell Stander, Tri Songz, Curt Tigges, Benjamin Th ˜A©rien, Phil Wang, and Samuel Weinbach. GPT-NeoX: Large Scale Autoregressive Language Modeling in PyTorch, 9 2023.
+
+[6] Jacob Austin, Augustus Odena, Maxwell Nye, Maarten Bosma, Henryk Michalewski, David Dohan, Ellen Jiang, Carrie Cai, Michael Terry, Quoc Le, and Charles Sutton. Program synthesis with large language models, 2021.
+
+[7] BIG bench authors. Beyond the imitation game: Quantifying and extrapolating the capabilities of language
+
+models. Transactions on Machine Learning Research, 2023.
+
+[8] Maciej Besta, Nils Blach, Ales Kubicek, Robert Gerstenberger, Lukas Gianinazzi, Joanna Gajda, Tomasz Lehmann, Michal Podstawski, Hubert Niewiadomski, Piotr Nyczyk, and Torsten Hoefler. Graph of thoughts: Solving elaborate problems with large language models, 2023.
+
+12
+
+[9] Sid Black, Stella Biderman, Eric Hallahan, Quentin Anthony, Leo Gao, Laurence Golding, Horace He, Connor Leahy, Kyle McDonell, Jason Phang, Michael Pieler, USVSN Sai Prashanth, Shivanshu Purohit, Laria Reynolds, Jonathan Tow, Ben Wang, and Samuel Weinbach. GPT-NeoX-20B: An open-source autoregressive language model. In Proceedings of the ACL Workshop on Challenges & Perspectives in Creating Large Language Models, 2022.
+
+[10] Charlie Chen, Sebastian Borgeaud, Geoffrey Irving, Jean-Baptiste Lespiau, Laurent Sifre, and John Jumper.
+
+Accelerating large language model decoding with speculative sampling, 2023.
+
+[11] Mark Chen, Jerry Tworek, Heewoo Jun, Qiming Yuan, Henrique Ponde de Oliveira Pinto, Jared Kaplan, Harri Edwards, Yuri Burda, Nicholas Joseph, Greg Brockman, Alex Ray, Raul Puri, Gretchen Krueger, Michael Petrov, Heidy Khlaaf, Girish Sastry, Pamela Mishkin, Brooke Chan, Scott Gray, Nick Ryder, Mikhail Pavlov, Alethea Power, Lukasz Kaiser, Mohammad Bavarian, Clemens Winter, Philippe Tillet, Felipe Petroski Such, Dave Cum- mings, Matthias Plappert, Fotios Chantzis, Elizabeth Barnes, Ariel Herbert-Voss, William Hebgen Guss, Alex Nichol, Alex Paino, Nikolas Tezak, Jie Tang, Igor Babuschkin, Suchir Balaji, Shantanu Jain, William Saunders, Christopher Hesse, Andrew N. Carr, Jan Leike, Josh Achiam, Vedant Misra, Evan Morikawa, Alec Radford, Matthew Knight, Miles Brundage, Mira Murati, Katie Mayer, Peter Welinder, Bob McGrew, Dario Amodei, Sam McCandlish, Ilya Sutskever, and Wojciech Zaremba. Evaluating large language models trained on code. 2021.
+
+[12] Wenhu Chen, Xueguang Ma, Xinyi Wang, and William W. Cohen. Program of thoughts prompting: Disentan-
+
+gling computation from reasoning for numerical reasoning tasks, 2023.
+
+[13] Together Computer. Redpajama: an open dataset for training large language models, 2023.
+
+[14] Tim Dettmers, Ruslan Svirschevski, Vage Egiazarian, Denis Kuznedelev, Elias Frantar, Saleh Ashkboos, Alexan- der Borzunov, Torsten Hoefler, and Dan Alistarh. Spqr: A sparse-quantized representation for near-lossless llm weight compression, 2023.
+
+[15] Teven Le Scao et al. Bloom: A 176b-parameter open-access multilingual language model, 2023.
+
+[16] Elias Frantar and Dan Alistarh. Sparsegpt: Massive language models can be accurately pruned in one-shot, 2023.
+
+[17] Elias Frantar, Saleh Ashkboos, Torsten Hoefler, and Dan Alistarh. GPTQ: Accurate post-training compression
+
+for generative pretrained transformers. arXiv preprint arXiv:2210.17323, 2022.
+
+[18] Luyu Gao, Aman Madaan, Shuyan Zhou, Uri Alon, Pengfei Liu, Yiming Yang, Jamie Callan, and Graham
+
+Neubig. Pal: Program-aided language models. arXiv preprint arXiv:2211.10435, 2022.
+
+[19] Shibo Hao, Yi Gu, Haodi Ma, Joshua Jiahua Hong, Zhen Wang, Daisy Zhe Wang, and Zhiting Hu. Reasoning
+
+with language model is planning with world model, 2023.
+
+[20] Dan Hendrycks, Steven Basart, Saurav Kadavath, Mantas Mazeika, Akul Arora, Ethan Guo, Collin Burns, Samir Puranik, Horace He, Dawn Song, and Jacob Steinhardt. Measuring coding challenge competence with apps. NeurIPS, 2021.
+
+[21] Dan Hendrycks, Collin Burns, Steven Basart, Andy Zou, Mantas Mazeika, Dawn Song, and Jacob Steinhardt. Measuring massive multitask language understanding. Proceedings of the International Conference on Learning Representations (ICLR), 2021.
+
+[22] Dan Hendrycks, Collin Burns, Saurav Kadavath, Akul Arora, Steven Basart, Eric Tang, Dawn Song, and Jacob
+
+Steinhardt. Measuring mathematical problem solving with the math dataset. NeurIPS, 2021.
+
+[23] Neil Houlsby, Andrei Giurgiu, Stanislaw Jastrzebski, Bruna Morrone, Quentin De Laroussilhe, Andrea Ges- mundo, Mona Attariyan, and Sylvain Gelly. Parameter-efficient transfer learning for NLP. In Kamalika Chaud- huri and Ruslan Salakhutdinov, editors, Proceedings of the 36th International Conference on Machine Learning, volume 97 of Proceedings of Machine Learning Research, pages 2790–2799. PMLR, 09–15 Jun 2019.
+
+13
+
+[24] Edward J Hu, Yelong Shen, Phillip Wallis, Zeyuan Allen-Zhu, Yuanzhi Li, Shean Wang, Lu Wang, and Weizhu Chen. LoRA: Low-rank adaptation of large language models. In International Conference on Learning Repre- sentations, 2022.
+
+[25] Albert Q. Jiang, Alexandre Sablayrolles, Arthur Mensch, Chris Bamford, Devendra Singh Chaplot, Diego de las Casas, Florian Bressand, Gianna Lengyel, Guillaume Lample, Lucile Saulnier, L ˜A©lio Renard Lavaud, Marie- Anne Lachaux, Pierre Stock, Teven Le Scao, Thibaut Lavril, Thomas Wang, Timoth ˜A©e Lacroix, and William El Sayed. Mistral 7b, 2023.
+
+[26] Andrej Karpathy. Intro to large language models, 2023.
+
+[27] Tushar Khot, Harsh Trivedi, Matthew Finlayson, Yao Fu, Kyle Richardson, Peter Clark, and Ashish Sabhar- wal. Decomposed prompting: A modular approach for solving complex tasks. In The Eleventh International Conference on Learning Representations, 2023.
+
+[28] Sehoon Kim, Coleman Hooper, Amir Gholami, Zhen Dong, Xiuyu Li, Sheng Shen, Michael W. Mahoney, and
+
+Kurt Keutzer. Squeezellm: Dense-and-sparse quantization, 2023.
+
+[29] Sehoon Kim, Karttikeya Mangalam, Suhong Moon, Jitendra Malik, Michael W. Mahoney, Amir Gholami, and
+
+Kurt Keutzer. Speculative decoding with big little decoder, 2023.
+
+[30] Woosuk Kwon, Sehoon Kim, Michael W. Mahoney, Joseph Hassoun, Kurt Keutzer, and Amir Gholami. A fast
+
+post-training pruning framework for transformers, 2022.
+
+[31] Woosuk Kwon, Zhuohan Li, Siyuan Zhuang, Ying Sheng, Lianmin Zheng, Cody Hao Yu, Joseph E. Gonzalez, Hao Zhang, and Ion Stoica. Efficient memory management for large language model serving with pagedattention. In Proceedings of the ACM SIGOPS 29th Symposium on Operating Systems Principles, 2023.
+
+[32] Brian Lester, Rami Al-Rfou, and Noah Constant. The power of scale for parameter-efficient prompt tuning. In Marie-Francine Moens, Xuanjing Huang, Lucia Specia, and Scott Wen-tau Yih, editors, Proceedings of the 2021 Conference on Empirical Methods in Natural Language Processing, pages 3045–3059, Online and Punta Cana, Dominican Republic, November 2021. Association for Computational Linguistics.
+
+[33] Yaniv Leviathan, Matan Kalman, and Yossi Matias. Fast inference from transformers via speculative decoding,
+
+2023.
+
+[34] Minghao Li, Feifan Song, Bowen Yu, Haiyang Yu, Zhoujun Li, Fei Huang, and Yongbin Li. Api-bank: A
+
+benchmark for tool-augmented llms. arXiv preprint arXiv:2304.08244, 2023.
+
+[35] Yaobo Liang, Chenfei Wu, Ting Song, Wenshan Wu, Yan Xia, Yu Liu, Yang Ou, Shuai Lu, Lei Ji, Shaoguang Mao, Yun Wang, Linjun Shou, Ming Gong, and Nan Duan. Taskmatrix.ai: Completing tasks by connecting foundation models with millions of apis, 2023.
+
+[36] Ji Lin, Jiaming Tang, Haotian Tang, Shang Yang, Xingyu Dang, Chuang Gan, and Song Han. Awq: Activation-
+
+aware weight quantization for llm compression and acceleration, 2023.
+
+[37] Jerry Liu. LlamaIndex, 11 2022.
+
+[38] Aman Madaan, Niket Tandon, Prakhar Gupta, Skyler Hallinan, Luyu Gao, Sarah Wiegreffe, Uri Alon, Nouha Dziri, Shrimai Prabhumoye, Yiming Yang, Shashank Gupta, Bodhisattwa Prasad Majumder, Katherine Hermann, Sean Welleck, Amir Yazdanbakhsh, and Peter Clark. Self-refine: Iterative refinement with self-feedback, 2023.
+
+[39] Xuefei Ning, Zinan Lin, Zixuan Zhou, Zifu Wang, Huazhong Yang, and Yu Wang. Skeleton-of-thought: Large
+
+language models can do parallel decoding, 2023.
+
+[40] OpenAI. Gpt-4 technical report, 2023.
+
+[41] Charles Packer, Vivian Fang, Shishir G. Patil, Kevin Lin, Sarah Wooders, and Joseph E. Gonzalez. Memgpt:
+
+Towards llms as operating systems, 2023.
+
+14
+
+[42] Pruthvi Patel, Swaroop Mishra, Mihir Parmar, and Chitta Baral. Is a question decomposition unit all we need? In Yoav Goldberg, Zornitsa Kozareva, and Yue Zhang, editors, Proceedings of the 2022 Conference on Empirical Methods in Natural Language Processing, pages 4553–4569, Abu Dhabi, United Arab Emirates, December 2022. Association for Computational Linguistics.
+
+[43] Shishir G. Patil, Tianjun Zhang, Xin Wang, and Joseph E. Gonzalez. Gorilla: Large language model connected
+
+with massive apis, 2023.
+
+[44] Ofir Press, Muru Zhang, Sewon Min, Ludwig Schmidt, Noah A. Smith, and Mike Lewis. Measuring and nar-
+
+rowing the compositionality gap in language models, 2023.
+
+[45] Yujia Qin, Shihao Liang, Yining Ye, Kunlun Zhu, Lan Yan, Yaxi Lu, Yankai Lin, Xin Cong, Xiangru Tang, Bill Qian, et al. Toolllm: Facilitating large language models to master 16000+ real-world apis. arXiv preprint arXiv:2307.16789, 2023.
+
+[46] Yangjun Ruan, Honghua Dong, Andrew Wang, Silviu Pitis, Yongchao Zhou, Jimmy Ba, Yann Dubois, Chris J. Maddison, and Tatsunori Hashimoto. Identifying the risks of lm agents with an lm-emulated sandbox. arXiv preprint arXiv:2309.15817, 2023.
+
+[47] Timo Schick, Jane Dwivedi-Yu, Roberto Dess`ı, Roberta Raileanu, Maria Lomeli, Luke Zettlemoyer, Nicola Cancedda, and Thomas Scialom. Toolformer: Language models can teach themselves to use tools. arXiv preprint arXiv:2302.04761, 2023.
+
+[48] Yongliang Shen, Kaitao Song, Xu Tan, Dongsheng Li, Weiming Lu, and Yueting Zhuang. Hugginggpt: Solving
+
+ai tasks with chatgpt and its friends in hugging face, 2023.
+
+[49] Mohit Shridhar, Xingdi Yuan, Marc-Alexandre Cˆot´e, Yonatan Bisk, Adam Trischler, and Matthew Hausknecht. ALFWorld: Aligning Text and Embodied Environments for Interactive Learning. In Proceedings of the Interna- tional Conference on Learning Representations (ICLR), 2021.
+
+[50] Yifan Song, Weimin Xiong, Dawei Zhu, Wenhao Wu, Han Qian, Mingbo Song, Hailiang Huang, Cheng Li, Ke Wang, Rong Yao, Ye Tian, and Sujian Li. Restgpt: Connecting large language models with real-world restful apis, 2023.
+
+[51] Theodore R. Sumers, Shunyu Yao, Karthik Narasimhan, and Thomas L. Griffiths. Cognitive architectures for
+
+language agents, 2023.
+
+[52] James Thorne, Andreas Vlachos, Christos Christodoulopoulos, and Arpit Mittal. FEVER: a large-scale dataset for fact extraction and VERification. In Marilyn Walker, Heng Ji, and Amanda Stent, editors, Proceedings of the 2018 Conference of the North American Chapter of the Association for Computational Linguistics: Human Lan- guage Technologies, Volume 1 (Long Papers), pages 809–819, New Orleans, Louisiana, June 2018. Association for Computational Linguistics.
+
+[53] Hugo Touvron, Thibaut Lavril, Gautier Izacard, Xavier Martinet, Marie-Anne Lachaux, Timoth ˜A©e Lacroix, Baptiste Rozi ˜Aˇsre, Naman Goyal, Eric Hambro, Faisal Azhar, Aurelien Rodriguez, Armand Joulin, Edouard Grave, and Guillaume Lample. Llama: Open and efficient foundation language models, 2023.
+
+[54] Hugo Touvron, Louis Martin, Kevin Stone, Peter Albert, Amjad Almahairi, Yasmine Babaei, Nikolay Bashlykov, Soumya Batra, Prajjwal Bhargava, Shruti Bhosale, Dan Bikel, Lukas Blecher, Cristian Canton Ferrer, Moya Chen, Guillem Cucurull, David Esiobu, Jude Fernandes, Jeremy Fu, Wenyin Fu, Brian Fuller, Cynthia Gao, Vedanuj Goswami, Naman Goyal, Anthony Hartshorn, Saghar Hosseini, Rui Hou, Hakan Inan, Marcin Kardas, Viktor Kerkez, Madian Khabsa, Isabel Kloumann, Artem Korenev, Punit Singh Koura, Marie-Anne Lachaux, Thibaut Lavril, Jenya Lee, Diana Liskovich, Yinghai Lu, Yuning Mao, Xavier Martinet, Todor Mihaylov, Pushkar Mishra, Igor Molybog, Yixin Nie, Andrew Poulton, Jeremy Reizenstein, Rashi Rungta, Kalyan Saladi, Alan Schelten, Ruan Silva, Eric Michael Smith, Ranjan Subramanian, Xiaoqing Ellen Tan, Binh Tang, Ross Taylor, Adina Williams, Jian Xiang Kuan, Puxin Xu, Zheng Yan, Iliyan Zarov, Yuchen Zhang, Angela Fan, Melanie Kambadur, Sharan Narang, Aurelien Rodriguez, Robert Stojnic, Sergey Edunov, and Thomas Scialom. Llama 2: Open foundation and fine-tuned chat models, 2023.
+
+15
+
+[55] Lei Wang, Wanyu Xu, Yihuai Lan, Zhiqiang Hu, Yunshi Lan, Roy Ka-Wei Lee, and Ee-Peng Lim. Plan-and- solve prompting: Improving zero-shot chain-of-thought reasoning by large language models. arXiv preprint arXiv:2305.04091, 2023.
+
+[56] Xuezhi Wang, Jason Wei, Dale Schuurmans, Quoc Le, Ed Chi, Sharan Narang, Aakanksha Chowdhery, and
+
+Denny Zhou. Self-consistency improves chain of thought reasoning in language models, 2023.
+
+[57] Jason Wei, Xuezhi Wang, Dale Schuurmans, Maarten Bosma, brian ichter, Fei Xia, Ed Chi, Quoc V Le, and Denny Zhou. Chain-of-thought prompting elicits reasoning in large language models. In S. Koyejo, S. Mohamed, A. Agarwal, D. Belgrave, K. Cho, and A. Oh, editors, Advances in Neural Information Processing Systems, volume 35, pages 24824–24837. Curran Associates, Inc., 2022.
+
+[58] Jason Wei, Xuezhi Wang, Dale Schuurmans, Maarten Bosma, brian ichter, Fei Xia, Ed Chi, Quoc V Le, and Denny Zhou. Chain-of-thought prompting elicits reasoning in large language models. In S. Koyejo, S. Mohamed, A. Agarwal, D. Belgrave, K. Cho, and A. Oh, editors, Advances in Neural Information Processing Systems, volume 35, pages 24824–24837. Curran Associates, Inc., 2022.
+
+[59] Tomer Wolfson, Mor Geva, Ankit Gupta, Matt Gardner, Yoav Goldberg, Daniel Deutch, and Jonathan Berant. Break it down: A question understanding benchmark. Transactions of the Association for Computational Lin- guistics, 2020.
+
+[60] Binfeng Xu, Zhiyuan Peng, Bowen Lei, Subhabrata Mukherjee, Yuchen Liu, and Dongkuan Xu. Rewoo: De-
+
+coupling reasoning from observations for efficient augmented language models, 2023.
+
+[61] Zhilin Yang, Peng Qi, Saizheng Zhang, Yoshua Bengio, William W Cohen, Ruslan Salakhutdinov, and Christo- pher D Manning. Hotpotqa: A dataset for diverse, explainable multi-hop question answering. arXiv preprint arXiv:1809.09600, 2018.
+
+[62] Zonglin Yang, Li Dong, Xinya Du, Hao Cheng, Erik Cambria, Xiaodong Liu, Jianfeng Gao, and Furu Wei.
+
+Language models as inductive reasoners, 2022.
+
+[63] Shunyu Yao, Howard Chen, John Yang, and Karthik Narasimhan. Webshop: Towards scalable real-world web
+
+interaction with grounded language agents, 2023.
+
+[64] Shunyu Yao, Dian Yu, Jeffrey Zhao, Izhak Shafran, Thomas L. Griffiths, Yuan Cao, and Karthik Narasimhan.
+
+Tree of Thoughts: Deliberate problem solving with large language models, 2023.
+
+[65] Shunyu Yao, Jeffrey Zhao, Dian Yu, Nan Du, Izhak Shafran, Karthik Narasimhan, and Yuan Cao. React: Syner-
+
+gizing reasoning and acting in language models. arXiv preprint arXiv:2210.03629, 2022.
+
+[66] Gyeong-In Yu, Joo Seong Jeong, Geon-Woo Kim, Soojeong Kim, and Byung-Gon Chun. Orca: A distributed serving system for {Transformer-Based} generative models. In 16th USENIX Symposium on Operating Systems Design and Implementation (OSDI 22), pages 521–538, 2022.
+
+[67] Wenhao Yu, Meng Jiang, Peter Clark, and Ashish Sabharwal. Ifqa: A dataset for open-domain question answer-
+
+ing under counterfactual presuppositions, 2023.
+
+[68] Susan Zhang, Stephen Roller, Naman Goyal, Mikel Artetxe, Moya Chen, Shuohui Chen, Christopher Dewan, Mona Diab, Xian Li, Xi Victoria Lin, Todor Mihaylov, Myle Ott, Sam Shleifer, Kurt Shuster, Daniel Simig, Punit Singh Koura, Anjali Sridhar, Tianlu Wang, and Luke Zettlemoyer. Opt: Open pre-trained transformer language models, 2022.
+
+[69] Huaixiu Steven Zheng, Swaroop Mishra, Xinyun Chen, Heng-Tze Cheng, Ed H. Chi, Quoc V Le, and Denny
+
+Zhou. Take a step back: Evoking reasoning via abstraction in large language models, 2023.
+
+[70] Denny Zhou, Nathanael Sch¨arli, Le Hou, Jason Wei, Nathan Scales, Xuezhi Wang, Dale Schuurmans, Claire Cui, Olivier Bousquet, Quoc V Le, and Ed H. Chi. Least-to-most prompting enables complex reasoning in large language models. In The Eleventh International Conference on Learning Representations, 2023.
+
+16
+
+A Appendix
+
+A.1 Experiment Details
+
+Our experiments evaluate two different common scenarios: (1) using API-based closed-source models; and (2) using open-source models with an in-house serving framework. We use OpenAI’s GPT models as closed-source models, in particular, gpt-3.5-turbo (1106 release) for HotpotQA and Movie Recommendation, gpt-4-turbo (1106 release) for ParallelQA, and gpt-4 (0613 release) for Game of 24. Experiments on HotpotQA, Movie Recommendation, and ParallelQA are all conducted in November 2023 after the 1106 release. The Game of 24 experiments are conducted over a two-month period from September to October 2023. For an open-source model, we use LLaMA-2 [54], which was hosted on 2 A100-80GB GPUs using the vLLM [31] framework. All the runs have been carried out with zero temperature, except for thought proposer and state evaluator for the Game of 24 evaluation, where the temperature is set to 0.7. Since OpenAI has randomness in outputs even with temperature 0, we have conducted 3 runs and reported the average accuracy. Across ReAct, OpenAI parallel function calling, and LLMCompiler, we perform 3, 1, and 5-shot learning for HotpotQA, Movie Recommendation, and ParallelQA, respectively; the same examples across different methods were used to ensure a fair comparison. For the Game of 24, we use 2 in-context examples for the Planner. We use the same instruction prompts across different methods for a fair comparison, except for ReAct† in Sec. 4.1 with additional ReAct-specific prompts.
+
+A.2 Analysis
+
+A.2.1 Parallel Speedup Modeling
+
+While LLMCompiler shows noticeable latency gain in various workloads, it is not achieving the N× latency speedup for N-way parallel workloads. This is mostly due to the overhead associated with LLMCompiler’s Planner and final answering process that cannot be parallelized. In our Movie Recommendation experiment, LLMCompiler’s Planner and the answering process have an overhead of 1.88 and 1.62 seconds on average, respectively, whose combined overhead already comprises more than half of LLMCompiler’s overall latency in Tab 1. Another source of overhead is the straggler effect among the parallel tasks when they need to join together. We observe the average latency of the slowest search to be 1.13 seconds which is nearly 2× the average latency of all tasks, which is 0.61 seconds. Below, we provide an analytical latency modeling of ReAct, LLMCompiler, and LLMCompiler with streaming, and we provide an analysis of achievable latency speedup.
+
+In this section, our focus is on embarrassingly parallelizable workload (pattern Figure 3(a)), as this allows for a clearer understanding of the impact of each component on potential latency gains. For the precise latency analysis, we consider three key components: the Planner, the Task Fetching Unit, and the Executor, in Figure 2. Assume that the Planner generates N different tasks to be done. We define Pi as the Planner’s output corresponding to the i-th atomic task. Each Pi is a blueprint for a specific atomic task, which we refer to as Ei. The execution of Ei involves a specific function call using the appropriate tool. The latency function of each unit in the system is defined to quantify the time taken for specific operations. For the Planner, the latency is denoted as TP(Pi), representing the time taken by the Planner to generate the plan Pi. Similarly, for the Executor, the latency, TE(Ei), corresponds to the time required to complete the task Ei. We ignore the latency of Task Formulation Unit as it is negligible in this section. Our focus here is on comparing the latency models of ReAct [65], and LLMCompiler.
+
+To begin our analysis of ReAct’s latency, we express its total latency as:
+
+TR =
+
+N ∑ i=1
+
+(cid:16)
+
+TR P (Pi) + TE(Ei)
+
+(cid:17)
+
+.
+
+Here, the superscript R refers to ReAct. In the ReAct agent system, the process typically involves initial thought generation, followed by action generation and the acquisition of observations through function calls associated with the tool. The creation of both thought and action are collectively considered as part of generating Pi. It is important to note that while the Planner’s latency is denoted with a superscript (indicating ReAct), the Executor’s latency does not have such a superscript. This is because the function calling and the tools execution remain the same between ReAct and LLMCompiler.
+
+For LLMCompiler, where all parallelizable tasks are processed concurrently, the total latency is determined by
+
+17
+
+(1)
+
+the slowest task among these tasks. Hence, the latency model for LLMCompiler can be represented as:
+
+TC =
+
+N ∑ i=1
+
+TC P (Pi) + max k∈1,...,N
+
+TE(Ek).
+
+This expression captures the sum of all planning times plus the execution time of the longest task, reflecting the system’s focus on parallel execution.
+
+Further, if the Planner employs streaming of the dependency graph, the latency model undergoes a modification
+
+and can be expressed as:
+
+TSC =
+
+N ∑ i=1
+
+TC P (Pi) + TE(EN).
+
+It is important to note that TSC ≤ TC. This implies that the streaming mechanism allows for a more efficient handling of task dependencies, potentially reducing overall latency.
+
+In evaluating the potential speedup achievable with the LLMCompiler framework compared to ReAct, the
+
+speedup metric, denoted as γ, is defined as follows:
+
+γ =
+
+TR TC
+
+=
+
+P (Pi) + TE(Ei)(cid:1) ∑N i=1 i=1 TC P (Pi) + maxk∈1,...,N TE(Ek)
+
+(cid:0)TR
+
+∑N
+
+.
+
+This ratio represents the comparative efficiency of LLMCompiler over ReAct, considering both planning and execu- tion latencies.
+
+To estimate the upper bound of this speedup, γmax, we assume that the executor latency TE(Ei) is dominant over the planning latency TP(Pi) and all the latencies of executing tasks remain the same. Under this assumption, the upper bound is calculated as:
+
+γmax ≈
+
+∑N
+
+i=1 TE(Ei) maxk∈1,...,N TE(Ek)
+
+= N,
+
+indicating the theoretical maximum speedup, γmax, is equal to the number of tasks, N.
+
+On the other hand, the lower bound of the speedup, γ, is observed when the planning latency is the predominant factor. Given that the planning latencies of both ReAct and LLMCompiler are generally similar, the minimum speedup is approximated as:
+
+∑N ∑N
+
+i=1 TR i=1 TC From these observations, we can conclude that to achieve significant latency gains with LLMCompiler, it is
+
+P (Pi) P (Pi)
+
+γmin ≈
+
+≈ 1.
+
+crucial to (i) reduce the planner overhead and (ii) minimize the occurrence of stragglers.
+
+A.2.2 Planner Streaming
+
+An additional optimization that we introduced in the LLMCompiler is a streaming mechanism that enables the Planner to output tasks as they are created, instead of waiting to complete the entire batch. Without this, the Task Fetching Unit must wait for the Planner to finish generating all tasks. With streaming, however, the Planner can continuously feed tasks to the Task Fetching Units as soon as they are generated, thereby allowing for quicker task fetch. In Table A.1, we present a latency comparison of LLMCompiler with and without the streaming mechanism across different benchmarks. The results demonstrate consistent latency improvements with streaming. Particularly, in the ParallelQA benchmark, the streaming feature leads to a latency gain of up to 1.3×. This is attributed to the math tool’s longer execution time for ParallelQA, which can effectively hide the Planner’s latency in generating subsequent tasks, unlike the shorter execution times of the search tool used in HotpotQA and Movie Recommendation.
+
+A.3 User-Supplied Examples for LLMCompiler Configuration
+
+LLMCompiler provides a simple interface that allows for tailoring the framework to different use cases by providing tool definitions as well as optional in-context examples for the Planner. Below, we provide the Planner example prompts that are used to set up the framework for the Movie Recommendation and Game of 24 benchmarks with only a few lines of prompts.
+
+18
+
+(2)
+
+(3)
+
+(4)
+
+(5)
+
+(6)
+
+Table A.1: A latency comparison between using and not using streaming in the Planner. Streaming yields consis- tent latency improvement across different benchmarks, as it enables the Task Fetching Unit to start task execution immediately as each task is produced by the Planner. The impact of streaming is especially notable in the ParallelQA benchmark, where tool execution times are long enough to effectively hide the Planner’s execution time.
+
+Benchmark
+
+w/o streaming (s)
+
+w/ streaming (s)
+
+Latency speedup
+
+HotpotQA Movie Rec. ParallelQA
+
+4.00 5.64 21.72
+
+3.95 5.47 16.69
+
+1.01× 1.03× 1.30×
+
+A.3.1 Movie Recommendation Example Prompts
+
+Question: Find a movie similar to Mission Impossible, The Silence of the Lambs, American Beauty, Star Wars Episode IV - A New Hope Options: Austin Powers International Man of Mystery Alesha Popvich and Tugarin the Dragon In Cold Blood Rosetta
+
+1. 2. 3. 4. 5. 6. 7. 8. Thought: I can answer the question now. 9. ### join()
+
+search("Mission Impossible") search("The Silence of the Lambs") search("American Beauty") search("Star Wars Episode IV - A New Hope") search("Austin Powers International Man of Mystery") search("Alesha Popvich and Tugarin the Dragon") search("In Cold Blood") search("Rosetta")
+
+A.3.2 Game of 24 Example Prompts
+
+Question: "1 2 3 4", state list: $1 = thought proposer("1 2 3 4", "") $2 = state evaluator("1 2 3 4", "$1") $3 = top k select("1 2 3 4", ["$1"], ["$2"]) $4 = join() ### Question: "1 2 3 4", state list: 4)","3-1=2(left:2 2 4)","4-1=3(left:2 3 3)","2*1=2(left:2 3 4)"] $1 = thought proposer("1 2 3 4", "1+2=3(left:3 3 4)") $2 = thought proposer("1 2 3 4", "2-1=1(left:1 3 4)") $3 = thought proposer("1 2 3 4", "3-1=2(left:2 2 4)") $4 = thought proposer("1 2 3 4", "4-1=3(left:2 3 3)") $5 = thought proposer("1 2 3 4", "2*1=2(left:2 3 4)") $6 = state evaluator("1 2 3 4", "$1") $7 = state evaluator("1 2 3 4", "$2") $8 = state evaluator("1 2 3 4", "$3") $9 = state evaluator("1 2 3 4", "$4") $10 = state evaluator("1 2 3 4", "$5")
+
+[""]
+
+["1+2=3(left:3 3 4)","2-1=1(left:1 3
+
+19
+
+$11 = top k select("1 2 3 4", ["$1", "$2", "$3", "$4", "$5"], ["$6", "$7", "$8", "$9", "$10"]) $12 = join() ###
+
+A.4 Pre-defined LLMCompiler Planner Prompt
+
+Each action described above contains input/output types and descriptions. - You must strictly adhere to the input and output types for each action. - The action descriptions contain the guidelines. follow those guidelines when you use the actions. - Each action in the plan should strictly be one of the above types. Follow the Python conventions for each action. You MUST strictly
+
+Each action MUST have a unique ID, which is strictly increasing.
+
+Inputs for actions can either be constants or outputs from preceding actions. In the latter case, use the format $id to denote the ID of the previous action whose output will be the input. - Ensure the plan maximizes parallelizability. - Only use the provided action types. using these, invoke the join action for the next steps. - Never explain the plan with comments (e.g. - Never introduce new actions other than the ones provided. #).
+
+A.5 Custom Benchmark Generation
+
+Inspired by the IfQA benchmark [67], our custom benchmark ParallelQA contains 113 examples that are designed to use mathematical questions on factual details of different entities to answer questions, thus requiring a mix of search and mathematical operations that are interdependent in various ways. For instance, the benchmark includes examples like “If Texas and Florida were to merge and become one state, as well as California and Michigan, what would be the largest population density among these 2 new states?” requires four parallel search tasks, followed by math tasks dependent on the search outcomes, that can be executed in parallel.
+
+The main objective of the benchmark is to quantify the framework’s ability to decompose an input into multiple tasks to derive an answer. Therefore, we have meticulously selected 56 distinct entities across various domains whose attributes can be accessible from Wikipedia search. Additionally, to incorporate diverse execution patterns, we crafted various dependency patterns that perform unary and binary math operations after searching for additional information about entities in a given question. We have also curated different questions that accommodate different numbers of maximally parallelizable tasks, ranging from 2 to 5. By minimizing tool execution failures, we have aimed our benchmark to effectively assess the frameworks’ abilities to decompose questions into multiple tasks, plan them out, and derive final answers based on observations. The benchmark contains 113 different examples, that were populated by gpt-4 based on the aforementioned criteria and labeled by humans afterward.
+
+20

@@ -1,0 +1,1044 @@
+[
+    {
+        "element_id": "542ad59e63ed6d3b2d535bd00a7e3c2d",
+        "metadata": {
+            "file_directory": "/Users/sasha/github/LlamaIndex/llama_index/docs/module_guides/loading/documents_and_nodes",
+            "filename": "usage_documents.md",
+            "filetype": "text/markdown",
+            "languages": [
+                "eng"
+            ],
+            "last_modified": "2024-01-08T15:19:23",
+            "page_number": 1
+        },
+        "text": "Defining and Customizing Documents",
+        "type": "Title"
+    },
+    {
+        "element_id": "6edae678f82d241a17e6eb7bb78f3b86",
+        "metadata": {
+            "file_directory": "/Users/sasha/github/LlamaIndex/llama_index/docs/module_guides/loading/documents_and_nodes",
+            "filename": "usage_documents.md",
+            "filetype": "text/markdown",
+            "languages": [
+                "eng"
+            ],
+            "last_modified": "2024-01-08T15:19:23",
+            "page_number": 1
+        },
+        "text": "Defining Documents",
+        "type": "Title"
+    },
+    {
+        "element_id": "d39438fc0bcdff1a5394a5870ae7526b",
+        "metadata": {
+            "file_directory": "/Users/sasha/github/LlamaIndex/llama_index/docs/module_guides/loading/documents_and_nodes",
+            "filename": "usage_documents.md",
+            "filetype": "text/markdown",
+            "languages": [
+                "eng"
+            ],
+            "last_modified": "2024-01-08T15:19:23",
+            "page_number": 1,
+            "parent_id": "6edae678f82d241a17e6eb7bb78f3b86"
+        },
+        "text": "Documents can either be created automatically via data loaders, or constructed manually.",
+        "type": "NarrativeText"
+    },
+    {
+        "element_id": "9f6cbf4060bee5d34405610191183479",
+        "metadata": {
+            "file_directory": "/Users/sasha/github/LlamaIndex/llama_index/docs/module_guides/loading/documents_and_nodes",
+            "filename": "usage_documents.md",
+            "filetype": "text/markdown",
+            "languages": [
+                "eng"
+            ],
+            "last_modified": "2024-01-08T15:19:23",
+            "page_number": 1,
+            "parent_id": "6edae678f82d241a17e6eb7bb78f3b86"
+        },
+        "text": "By default, all of our data loaders (including those offered on LlamaHub) return Document objects through the load_data function.",
+        "type": "NarrativeText"
+    },
+    {
+        "element_id": "870efbefe01ceef7eb474f8cc9f6459c",
+        "metadata": {
+            "file_directory": "/Users/sasha/github/LlamaIndex/llama_index/docs/module_guides/loading/documents_and_nodes",
+            "filename": "usage_documents.md",
+            "filetype": "text/markdown",
+            "languages": [
+                "eng"
+            ],
+            "last_modified": "2024-01-08T15:19:23",
+            "page_number": 1
+        },
+        "text": "```python\nfrom llama_index import SimpleDirectoryReader",
+        "type": "Title"
+    },
+    {
+        "element_id": "f0fd8c4460fcd590a8e067cf589eb50d",
+        "metadata": {
+            "file_directory": "/Users/sasha/github/LlamaIndex/llama_index/docs/module_guides/loading/documents_and_nodes",
+            "filename": "usage_documents.md",
+            "filetype": "text/markdown",
+            "languages": [
+                "eng"
+            ],
+            "last_modified": "2024-01-08T15:19:23",
+            "page_number": 1
+        },
+        "text": "documents = SimpleDirectoryReader(\"./data\").load_data()\n```",
+        "type": "Title"
+    },
+    {
+        "element_id": "8ee20458a4fd6ca66e1c59dae07bfdd7",
+        "metadata": {
+            "file_directory": "/Users/sasha/github/LlamaIndex/llama_index/docs/module_guides/loading/documents_and_nodes",
+            "filename": "usage_documents.md",
+            "filetype": "text/markdown",
+            "languages": [
+                "eng"
+            ],
+            "last_modified": "2024-01-08T15:19:23",
+            "page_number": 1,
+            "parent_id": "f0fd8c4460fcd590a8e067cf589eb50d"
+        },
+        "text": "You can also choose to construct documents manually. LlamaIndex exposes the Document struct.",
+        "type": "NarrativeText"
+    },
+    {
+        "element_id": "2a9ed94529b49fa7c8c9373075d05910",
+        "metadata": {
+            "file_directory": "/Users/sasha/github/LlamaIndex/llama_index/docs/module_guides/loading/documents_and_nodes",
+            "filename": "usage_documents.md",
+            "filetype": "text/markdown",
+            "languages": [
+                "eng"
+            ],
+            "last_modified": "2024-01-08T15:19:23",
+            "page_number": 1
+        },
+        "text": "```python\nfrom llama_index import Document",
+        "type": "Title"
+    },
+    {
+        "element_id": "8f3acbeacd27a62f683c558153e6c5e6",
+        "metadata": {
+            "file_directory": "/Users/sasha/github/LlamaIndex/llama_index/docs/module_guides/loading/documents_and_nodes",
+            "filename": "usage_documents.md",
+            "filetype": "text/markdown",
+            "languages": [
+                "eng"
+            ],
+            "last_modified": "2024-01-08T15:19:23",
+            "page_number": 1,
+            "parent_id": "2a9ed94529b49fa7c8c9373075d05910"
+        },
+        "text": "text_list = [text1, text2, ...]\ndocuments = [Document(text=t) for t in text_list]\n```",
+        "type": "NarrativeText"
+    },
+    {
+        "element_id": "a05585c8413c0c914f5e313e0e4bd6cf",
+        "metadata": {
+            "file_directory": "/Users/sasha/github/LlamaIndex/llama_index/docs/module_guides/loading/documents_and_nodes",
+            "filename": "usage_documents.md",
+            "filetype": "text/markdown",
+            "languages": [
+                "eng"
+            ],
+            "last_modified": "2024-01-08T15:19:23",
+            "page_number": 1,
+            "parent_id": "2a9ed94529b49fa7c8c9373075d05910"
+        },
+        "text": "To speed up prototyping and development, you can also quickly create a document using some default text:",
+        "type": "NarrativeText"
+    },
+    {
+        "element_id": "73c6b4ec1a8d74fed8dbdd5c76f4b6b6",
+        "metadata": {
+            "file_directory": "/Users/sasha/github/LlamaIndex/llama_index/docs/module_guides/loading/documents_and_nodes",
+            "filename": "usage_documents.md",
+            "filetype": "text/markdown",
+            "languages": [
+                "eng"
+            ],
+            "last_modified": "2024-01-08T15:19:23",
+            "page_number": 1
+        },
+        "text": "python\ndocument = Document.example()",
+        "type": "Title"
+    },
+    {
+        "element_id": "b5b9f5cb1263a182180b05249242b2e6",
+        "metadata": {
+            "file_directory": "/Users/sasha/github/LlamaIndex/llama_index/docs/module_guides/loading/documents_and_nodes",
+            "filename": "usage_documents.md",
+            "filetype": "text/markdown",
+            "languages": [
+                "eng"
+            ],
+            "last_modified": "2024-01-08T15:19:23",
+            "page_number": 1
+        },
+        "text": "Customizing Documents",
+        "type": "Title"
+    },
+    {
+        "element_id": "db826f27a5e6d5cff0e5062f74d3d860",
+        "metadata": {
+            "file_directory": "/Users/sasha/github/LlamaIndex/llama_index/docs/module_guides/loading/documents_and_nodes",
+            "filename": "usage_documents.md",
+            "filetype": "text/markdown",
+            "languages": [
+                "eng"
+            ],
+            "last_modified": "2024-01-08T15:19:23",
+            "page_number": 1,
+            "parent_id": "b5b9f5cb1263a182180b05249242b2e6"
+        },
+        "text": "This section covers various ways to customize Document objects. Since the Document object is a subclass of our TextNode object, all these settings and details apply to the TextNode object class as well.",
+        "type": "NarrativeText"
+    },
+    {
+        "element_id": "9eddf573cb509f1f62df633e25c052ac",
+        "metadata": {
+            "file_directory": "/Users/sasha/github/LlamaIndex/llama_index/docs/module_guides/loading/documents_and_nodes",
+            "filename": "usage_documents.md",
+            "filetype": "text/markdown",
+            "languages": [
+                "eng"
+            ],
+            "last_modified": "2024-01-08T15:19:23",
+            "page_number": 1
+        },
+        "text": "Metadata",
+        "type": "Title"
+    },
+    {
+        "element_id": "3d1ec8c813a1197b91a76c7cbdb2919c",
+        "metadata": {
+            "file_directory": "/Users/sasha/github/LlamaIndex/llama_index/docs/module_guides/loading/documents_and_nodes",
+            "filename": "usage_documents.md",
+            "filetype": "text/markdown",
+            "languages": [
+                "eng"
+            ],
+            "last_modified": "2024-01-08T15:19:23",
+            "page_number": 1,
+            "parent_id": "9eddf573cb509f1f62df633e25c052ac"
+        },
+        "text": "Documents also offer the chance to include useful metadata. Using the metadata dictionary on each document, additional information can be included to help inform responses and track down sources for query responses. This information can be anything, such as filenames or categories. If you are integrating with a vector database, keep in mind that some vector databases require that the keys must be strings, and the values must be flat (either str, float, or int).",
+        "type": "NarrativeText"
+    },
+    {
+        "element_id": "121f94b6608d6f777faa5576c618cbfb",
+        "metadata": {
+            "file_directory": "/Users/sasha/github/LlamaIndex/llama_index/docs/module_guides/loading/documents_and_nodes",
+            "filename": "usage_documents.md",
+            "filetype": "text/markdown",
+            "languages": [
+                "eng"
+            ],
+            "last_modified": "2024-01-08T15:19:23",
+            "page_number": 1,
+            "parent_id": "9eddf573cb509f1f62df633e25c052ac"
+        },
+        "text": "Any information set in the metadata dictionary of each document will show up in the metadata of each source node created from the document. Additionally, this information is included in the nodes, enabling the index to utilize it on queries and responses. By default, the metadata is injected into the text for both embedding and LLM model calls.",
+        "type": "NarrativeText"
+    },
+    {
+        "element_id": "aad9fb02b3139a74fa31003daf8f9c39",
+        "metadata": {
+            "file_directory": "/Users/sasha/github/LlamaIndex/llama_index/docs/module_guides/loading/documents_and_nodes",
+            "filename": "usage_documents.md",
+            "filetype": "text/markdown",
+            "languages": [
+                "eng"
+            ],
+            "last_modified": "2024-01-08T15:19:23",
+            "page_number": 1,
+            "parent_id": "9eddf573cb509f1f62df633e25c052ac"
+        },
+        "text": "There are a few ways to set up this dictionary:",
+        "type": "NarrativeText"
+    },
+    {
+        "element_id": "ee5e4719caac3a70451a7f3d8d86aa98",
+        "metadata": {
+            "file_directory": "/Users/sasha/github/LlamaIndex/llama_index/docs/module_guides/loading/documents_and_nodes",
+            "filename": "usage_documents.md",
+            "filetype": "text/markdown",
+            "languages": [
+                "eng"
+            ],
+            "last_modified": "2024-01-08T15:19:23",
+            "page_number": 1,
+            "parent_id": "9eddf573cb509f1f62df633e25c052ac"
+        },
+        "text": "In the document constructor:",
+        "type": "ListItem"
+    },
+    {
+        "element_id": "a133c96ec428f283f0f2bb3b71016aae",
+        "metadata": {
+            "file_directory": "/Users/sasha/github/LlamaIndex/llama_index/docs/module_guides/loading/documents_and_nodes",
+            "filename": "usage_documents.md",
+            "filetype": "text/markdown",
+            "languages": [
+                "eng"
+            ],
+            "last_modified": "2024-01-08T15:19:23",
+            "page_number": 1,
+            "parent_id": "9eddf573cb509f1f62df633e25c052ac"
+        },
+        "text": "python\ndocument = Document(\n    text=\"text\",\n    metadata={\"filename\": \"<doc_file_name>\", \"category\": \"<category>\"},\n)",
+        "type": "UncategorizedText"
+    },
+    {
+        "element_id": "768f0bbaaa176ea3cc115d47ea53c37f",
+        "metadata": {
+            "file_directory": "/Users/sasha/github/LlamaIndex/llama_index/docs/module_guides/loading/documents_and_nodes",
+            "filename": "usage_documents.md",
+            "filetype": "text/markdown",
+            "languages": [
+                "eng"
+            ],
+            "last_modified": "2024-01-08T15:19:23",
+            "page_number": 1,
+            "parent_id": "9eddf573cb509f1f62df633e25c052ac"
+        },
+        "text": "After the document is created:",
+        "type": "ListItem"
+    },
+    {
+        "element_id": "3ae92c7c806de2339846f8e597b8be90",
+        "metadata": {
+            "file_directory": "/Users/sasha/github/LlamaIndex/llama_index/docs/module_guides/loading/documents_and_nodes",
+            "filename": "usage_documents.md",
+            "filetype": "text/markdown",
+            "languages": [
+                "eng"
+            ],
+            "last_modified": "2024-01-08T15:19:23",
+            "page_number": 1
+        },
+        "text": "python\ndocument.metadata = {\"filename\": \"<doc_file_name>\"}",
+        "type": "Title"
+    },
+    {
+        "element_id": "53a0775a060ae568075f8b9d73cb7984",
+        "metadata": {
+            "file_directory": "/Users/sasha/github/LlamaIndex/llama_index/docs/module_guides/loading/documents_and_nodes",
+            "filename": "usage_documents.md",
+            "filetype": "text/markdown",
+            "languages": [
+                "eng"
+            ],
+            "last_modified": "2024-01-08T15:19:23",
+            "page_number": 1,
+            "parent_id": "3ae92c7c806de2339846f8e597b8be90"
+        },
+        "text": "Set the filename automatically using the SimpleDirectoryReader and file_metadata hook. This will automatically run the hook on each document to set the metadata field:",
+        "type": "ListItem"
+    },
+    {
+        "element_id": "870efbefe01ceef7eb474f8cc9f6459c",
+        "metadata": {
+            "file_directory": "/Users/sasha/github/LlamaIndex/llama_index/docs/module_guides/loading/documents_and_nodes",
+            "filename": "usage_documents.md",
+            "filetype": "text/markdown",
+            "languages": [
+                "eng"
+            ],
+            "last_modified": "2024-01-08T15:19:23",
+            "page_number": 1
+        },
+        "text": "```python\nfrom llama_index import SimpleDirectoryReader",
+        "type": "Title"
+    },
+    {
+        "element_id": "5c8f2e02aed924792bbbd4a069be81b5",
+        "metadata": {
+            "file_directory": "/Users/sasha/github/LlamaIndex/llama_index/docs/module_guides/loading/documents_and_nodes",
+            "filename": "usage_documents.md",
+            "filetype": "text/markdown",
+            "languages": [
+                "eng"
+            ],
+            "last_modified": "2024-01-08T15:19:23",
+            "page_number": 1
+        },
+        "text": "filename_fn = lambda filename: {\"file_name\": filename}",
+        "type": "Title"
+    },
+    {
+        "element_id": "a0f9ed0d06f0f411f73c06c783ccfd35",
+        "metadata": {
+            "file_directory": "/Users/sasha/github/LlamaIndex/llama_index/docs/module_guides/loading/documents_and_nodes",
+            "filename": "usage_documents.md",
+            "filetype": "text/markdown",
+            "languages": [
+                "eng"
+            ],
+            "last_modified": "2024-01-08T15:19:23",
+            "page_number": 1
+        },
+        "text": "automatically sets the metadata of each document according to filename_fn",
+        "type": "Title"
+    },
+    {
+        "element_id": "73db7fb81cec40c5805bf234cf2e129e",
+        "metadata": {
+            "file_directory": "/Users/sasha/github/LlamaIndex/llama_index/docs/module_guides/loading/documents_and_nodes",
+            "filename": "usage_documents.md",
+            "filetype": "text/markdown",
+            "languages": [
+                "eng"
+            ],
+            "last_modified": "2024-01-08T15:19:23",
+            "page_number": 1
+        },
+        "text": "documents = SimpleDirectoryReader(\n    \"./data\", file_metadata=filename_fn\n).load_data()\n```",
+        "type": "Title"
+    },
+    {
+        "element_id": "9fa4d369017cb4d3ae8ef13cd9b45444",
+        "metadata": {
+            "file_directory": "/Users/sasha/github/LlamaIndex/llama_index/docs/module_guides/loading/documents_and_nodes",
+            "filename": "usage_documents.md",
+            "filetype": "text/markdown",
+            "languages": [
+                "eng"
+            ],
+            "last_modified": "2024-01-08T15:19:23",
+            "page_number": 1
+        },
+        "text": "Customizing the id",
+        "type": "Title"
+    },
+    {
+        "element_id": "d2a87535cb3d765a346f087a772ac72f",
+        "metadata": {
+            "file_directory": "/Users/sasha/github/LlamaIndex/llama_index/docs/module_guides/loading/documents_and_nodes",
+            "filename": "usage_documents.md",
+            "filetype": "text/markdown",
+            "languages": [
+                "eng"
+            ],
+            "last_modified": "2024-01-08T15:19:23",
+            "page_number": 1,
+            "parent_id": "9fa4d369017cb4d3ae8ef13cd9b45444"
+        },
+        "text": "As detailed in the section Document Management, the doc_id is used to enable efficient refreshing of documents in the index. When using the SimpleDirectoryReader, you can automatically set the doc doc_id to be the full path to each document:",
+        "type": "NarrativeText"
+    },
+    {
+        "element_id": "870efbefe01ceef7eb474f8cc9f6459c",
+        "metadata": {
+            "file_directory": "/Users/sasha/github/LlamaIndex/llama_index/docs/module_guides/loading/documents_and_nodes",
+            "filename": "usage_documents.md",
+            "filetype": "text/markdown",
+            "languages": [
+                "eng"
+            ],
+            "last_modified": "2024-01-08T15:19:23",
+            "page_number": 1
+        },
+        "text": "```python\nfrom llama_index import SimpleDirectoryReader",
+        "type": "Title"
+    },
+    {
+        "element_id": "163c4a361b1c4949857297cb3445ec27",
+        "metadata": {
+            "file_directory": "/Users/sasha/github/LlamaIndex/llama_index/docs/module_guides/loading/documents_and_nodes",
+            "filename": "usage_documents.md",
+            "filetype": "text/markdown",
+            "languages": [
+                "eng"
+            ],
+            "last_modified": "2024-01-08T15:19:23",
+            "page_number": 1,
+            "parent_id": "870efbefe01ceef7eb474f8cc9f6459c"
+        },
+        "text": "documents = SimpleDirectoryReader(\"./data\", filename_as_id=True).load_data()\nprint([x.doc_id for x in documents])\n```",
+        "type": "NarrativeText"
+    },
+    {
+        "element_id": "3ea63f41f30289c1bbe9958fa7522f5f",
+        "metadata": {
+            "file_directory": "/Users/sasha/github/LlamaIndex/llama_index/docs/module_guides/loading/documents_and_nodes",
+            "filename": "usage_documents.md",
+            "filetype": "text/markdown",
+            "languages": [
+                "eng"
+            ],
+            "last_modified": "2024-01-08T15:19:23",
+            "page_number": 1,
+            "parent_id": "870efbefe01ceef7eb474f8cc9f6459c"
+        },
+        "text": "You can also set the doc_id of any Document directly!",
+        "type": "NarrativeText"
+    },
+    {
+        "element_id": "75cd02e02cba4bad004308b9025480cd",
+        "metadata": {
+            "file_directory": "/Users/sasha/github/LlamaIndex/llama_index/docs/module_guides/loading/documents_and_nodes",
+            "filename": "usage_documents.md",
+            "filetype": "text/markdown",
+            "languages": [
+                "eng"
+            ],
+            "last_modified": "2024-01-08T15:19:23",
+            "page_number": 1
+        },
+        "text": "python\ndocument.doc_id = \"My new document id!\"",
+        "type": "Title"
+    },
+    {
+        "element_id": "25d7e883036c4075db97cc4b72e6d6cf",
+        "metadata": {
+            "file_directory": "/Users/sasha/github/LlamaIndex/llama_index/docs/module_guides/loading/documents_and_nodes",
+            "filename": "usage_documents.md",
+            "filetype": "text/markdown",
+            "languages": [
+                "eng"
+            ],
+            "last_modified": "2024-01-08T15:19:23",
+            "page_number": 1,
+            "parent_id": "75cd02e02cba4bad004308b9025480cd"
+        },
+        "text": "Note: the ID can also be set through the node_id or id_ property on a Document object, similar to a TextNode object.",
+        "type": "NarrativeText"
+    },
+    {
+        "element_id": "7ecca0cb466a71b88ef9615f08d27e28",
+        "metadata": {
+            "file_directory": "/Users/sasha/github/LlamaIndex/llama_index/docs/module_guides/loading/documents_and_nodes",
+            "filename": "usage_documents.md",
+            "filetype": "text/markdown",
+            "languages": [
+                "eng"
+            ],
+            "last_modified": "2024-01-08T15:19:23",
+            "page_number": 1
+        },
+        "text": "Advanced - Metadata Customization",
+        "type": "Title"
+    },
+    {
+        "element_id": "608d1c3405106d77d5e8282dcf27b95c",
+        "metadata": {
+            "file_directory": "/Users/sasha/github/LlamaIndex/llama_index/docs/module_guides/loading/documents_and_nodes",
+            "filename": "usage_documents.md",
+            "filetype": "text/markdown",
+            "languages": [
+                "eng"
+            ],
+            "last_modified": "2024-01-08T15:19:23",
+            "page_number": 1,
+            "parent_id": "7ecca0cb466a71b88ef9615f08d27e28"
+        },
+        "text": "A key detail mentioned above is that by default, any metadata you set is included in the embeddings generation and LLM.",
+        "type": "NarrativeText"
+    },
+    {
+        "element_id": "b7cb431daead2b41359a2da5b9a11117",
+        "metadata": {
+            "file_directory": "/Users/sasha/github/LlamaIndex/llama_index/docs/module_guides/loading/documents_and_nodes",
+            "filename": "usage_documents.md",
+            "filetype": "text/markdown",
+            "languages": [
+                "eng"
+            ],
+            "last_modified": "2024-01-08T15:19:23",
+            "page_number": 1
+        },
+        "text": "Customizing LLM Metadata Text",
+        "type": "Title"
+    },
+    {
+        "element_id": "c1cd0abc9e9638fbc476e21a84fb9b37",
+        "metadata": {
+            "file_directory": "/Users/sasha/github/LlamaIndex/llama_index/docs/module_guides/loading/documents_and_nodes",
+            "filename": "usage_documents.md",
+            "filetype": "text/markdown",
+            "languages": [
+                "eng"
+            ],
+            "last_modified": "2024-01-08T15:19:23",
+            "page_number": 1,
+            "parent_id": "b7cb431daead2b41359a2da5b9a11117"
+        },
+        "text": "Typically, a document might have many metadata keys, but you might not want all of them visible to the LLM during response synthesis. In the above examples, we may not want the LLM to read the file_name of our document. However, the file_name might include information that will help generate better embeddings. A key advantage of doing this is to bias the embeddings for retrieval without changing what the LLM ends up reading.",
+        "type": "NarrativeText"
+    },
+    {
+        "element_id": "fe5c0cd49d283a4d65cfe415392a4214",
+        "metadata": {
+            "file_directory": "/Users/sasha/github/LlamaIndex/llama_index/docs/module_guides/loading/documents_and_nodes",
+            "filename": "usage_documents.md",
+            "filetype": "text/markdown",
+            "languages": [
+                "eng"
+            ],
+            "last_modified": "2024-01-08T15:19:23",
+            "page_number": 1,
+            "parent_id": "b7cb431daead2b41359a2da5b9a11117"
+        },
+        "text": "We can exclude it like so:",
+        "type": "NarrativeText"
+    },
+    {
+        "element_id": "691fe495c17c3edb20f08c22d39afc20",
+        "metadata": {
+            "file_directory": "/Users/sasha/github/LlamaIndex/llama_index/docs/module_guides/loading/documents_and_nodes",
+            "filename": "usage_documents.md",
+            "filetype": "text/markdown",
+            "languages": [
+                "eng"
+            ],
+            "last_modified": "2024-01-08T15:19:23",
+            "page_number": 1,
+            "parent_id": "b7cb431daead2b41359a2da5b9a11117"
+        },
+        "text": "python\ndocument.excluded_llm_metadata_keys = [\"file_name\"]",
+        "type": "NarrativeText"
+    },
+    {
+        "element_id": "9f7f59b1ac82676684b161769e413aa4",
+        "metadata": {
+            "file_directory": "/Users/sasha/github/LlamaIndex/llama_index/docs/module_guides/loading/documents_and_nodes",
+            "filename": "usage_documents.md",
+            "filetype": "text/markdown",
+            "languages": [
+                "eng"
+            ],
+            "last_modified": "2024-01-08T15:19:23",
+            "page_number": 1,
+            "parent_id": "b7cb431daead2b41359a2da5b9a11117"
+        },
+        "text": "Then, we can test what the LLM will actually end up reading using the get_content() function and specifying MetadataMode.LLM:",
+        "type": "NarrativeText"
+    },
+    {
+        "element_id": "af15adf9d99e983ef8988da881e781b5",
+        "metadata": {
+            "file_directory": "/Users/sasha/github/LlamaIndex/llama_index/docs/module_guides/loading/documents_and_nodes",
+            "filename": "usage_documents.md",
+            "filetype": "text/markdown",
+            "languages": [
+                "eng"
+            ],
+            "last_modified": "2024-01-08T15:19:23",
+            "page_number": 1
+        },
+        "text": "```python\nfrom llama_index.schema import MetadataMode",
+        "type": "Title"
+    },
+    {
+        "element_id": "76704ed5fca5449fef0b6c2a65932cb0",
+        "metadata": {
+            "file_directory": "/Users/sasha/github/LlamaIndex/llama_index/docs/module_guides/loading/documents_and_nodes",
+            "filename": "usage_documents.md",
+            "filetype": "text/markdown",
+            "languages": [
+                "eng"
+            ],
+            "last_modified": "2024-01-08T15:19:23",
+            "page_number": 1
+        },
+        "text": "print(document.get_content(metadata_mode=MetadataMode.LLM))\n```",
+        "type": "Title"
+    },
+    {
+        "element_id": "1225a913d8f08d370870bcbb74033880",
+        "metadata": {
+            "file_directory": "/Users/sasha/github/LlamaIndex/llama_index/docs/module_guides/loading/documents_and_nodes",
+            "filename": "usage_documents.md",
+            "filetype": "text/markdown",
+            "languages": [
+                "eng"
+            ],
+            "last_modified": "2024-01-08T15:19:23",
+            "page_number": 1
+        },
+        "text": "Customizing Embedding Metadata Text",
+        "type": "Title"
+    },
+    {
+        "element_id": "79e91f9c2b64be5bc4553372d92a4450",
+        "metadata": {
+            "file_directory": "/Users/sasha/github/LlamaIndex/llama_index/docs/module_guides/loading/documents_and_nodes",
+            "filename": "usage_documents.md",
+            "filetype": "text/markdown",
+            "languages": [
+                "eng"
+            ],
+            "last_modified": "2024-01-08T15:19:23",
+            "page_number": 1,
+            "parent_id": "1225a913d8f08d370870bcbb74033880"
+        },
+        "text": "Similar to customing the metadata visible to the LLM, we can also customize the metadata visible to embeddings. In this case, you can specifically exclude metadata visible to the embedding model, in case you DON'T want particular text to bias the embeddings.",
+        "type": "NarrativeText"
+    },
+    {
+        "element_id": "b2a05b494f7507dc76eadd0095d8b5da",
+        "metadata": {
+            "file_directory": "/Users/sasha/github/LlamaIndex/llama_index/docs/module_guides/loading/documents_and_nodes",
+            "filename": "usage_documents.md",
+            "filetype": "text/markdown",
+            "languages": [
+                "eng"
+            ],
+            "last_modified": "2024-01-08T15:19:23",
+            "page_number": 1,
+            "parent_id": "1225a913d8f08d370870bcbb74033880"
+        },
+        "text": "python\ndocument.excluded_embed_metadata_keys = [\"file_name\"]",
+        "type": "NarrativeText"
+    },
+    {
+        "element_id": "663f4a98d502496ffc34f28187298f20",
+        "metadata": {
+            "file_directory": "/Users/sasha/github/LlamaIndex/llama_index/docs/module_guides/loading/documents_and_nodes",
+            "filename": "usage_documents.md",
+            "filetype": "text/markdown",
+            "languages": [
+                "eng"
+            ],
+            "last_modified": "2024-01-08T15:19:23",
+            "page_number": 1,
+            "parent_id": "1225a913d8f08d370870bcbb74033880"
+        },
+        "text": "Then, we can test what the embedding model will actually end up reading using the get_content() function and specifying MetadataMode.EMBED:",
+        "type": "NarrativeText"
+    },
+    {
+        "element_id": "af15adf9d99e983ef8988da881e781b5",
+        "metadata": {
+            "file_directory": "/Users/sasha/github/LlamaIndex/llama_index/docs/module_guides/loading/documents_and_nodes",
+            "filename": "usage_documents.md",
+            "filetype": "text/markdown",
+            "languages": [
+                "eng"
+            ],
+            "last_modified": "2024-01-08T15:19:23",
+            "page_number": 1
+        },
+        "text": "```python\nfrom llama_index.schema import MetadataMode",
+        "type": "Title"
+    },
+    {
+        "element_id": "2c5ba41399937aa4afb18852a85de4d8",
+        "metadata": {
+            "file_directory": "/Users/sasha/github/LlamaIndex/llama_index/docs/module_guides/loading/documents_and_nodes",
+            "filename": "usage_documents.md",
+            "filetype": "text/markdown",
+            "languages": [
+                "eng"
+            ],
+            "last_modified": "2024-01-08T15:19:23",
+            "page_number": 1
+        },
+        "text": "print(document.get_content(metadata_mode=MetadataMode.EMBED))\n```",
+        "type": "Title"
+    },
+    {
+        "element_id": "f0420d053deb6e18a4ce13c1eb55c62d",
+        "metadata": {
+            "file_directory": "/Users/sasha/github/LlamaIndex/llama_index/docs/module_guides/loading/documents_and_nodes",
+            "filename": "usage_documents.md",
+            "filetype": "text/markdown",
+            "languages": [
+                "eng"
+            ],
+            "last_modified": "2024-01-08T15:19:23",
+            "page_number": 1
+        },
+        "text": "Customizing Metadata Format",
+        "type": "Title"
+    },
+    {
+        "element_id": "c4ad1f9837bc72436be5ed001a0d6c4f",
+        "metadata": {
+            "file_directory": "/Users/sasha/github/LlamaIndex/llama_index/docs/module_guides/loading/documents_and_nodes",
+            "filename": "usage_documents.md",
+            "filetype": "text/markdown",
+            "languages": [
+                "eng"
+            ],
+            "last_modified": "2024-01-08T15:19:23",
+            "page_number": 1,
+            "parent_id": "f0420d053deb6e18a4ce13c1eb55c62d"
+        },
+        "text": "As you know by now, metadata is injected into the actual text of each document/node when sent to the LLM or embedding model. By default, the format of this metadata is controlled by three attributes:",
+        "type": "NarrativeText"
+    },
+    {
+        "element_id": "8c93730ffd3f6f1efc672330c4189a85",
+        "metadata": {
+            "file_directory": "/Users/sasha/github/LlamaIndex/llama_index/docs/module_guides/loading/documents_and_nodes",
+            "filename": "usage_documents.md",
+            "filetype": "text/markdown",
+            "languages": [
+                "eng"
+            ],
+            "last_modified": "2024-01-08T15:19:23",
+            "page_number": 1,
+            "parent_id": "f0420d053deb6e18a4ce13c1eb55c62d"
+        },
+        "text": "Document.metadata_seperator -> default = \"\\n\"",
+        "type": "ListItem"
+    },
+    {
+        "element_id": "ed00e68fd96a7bd07aa4a75ee0eae6c5",
+        "metadata": {
+            "file_directory": "/Users/sasha/github/LlamaIndex/llama_index/docs/module_guides/loading/documents_and_nodes",
+            "filename": "usage_documents.md",
+            "filetype": "text/markdown",
+            "languages": [
+                "eng"
+            ],
+            "last_modified": "2024-01-08T15:19:23",
+            "page_number": 1,
+            "parent_id": "f0420d053deb6e18a4ce13c1eb55c62d"
+        },
+        "text": "When concatenating all key/value fields of your metadata, this field controls the separator between each key/value pair.",
+        "type": "NarrativeText"
+    },
+    {
+        "element_id": "8cd0346160b169ef311242b26b79ef63",
+        "metadata": {
+            "file_directory": "/Users/sasha/github/LlamaIndex/llama_index/docs/module_guides/loading/documents_and_nodes",
+            "filename": "usage_documents.md",
+            "filetype": "text/markdown",
+            "languages": [
+                "eng"
+            ],
+            "last_modified": "2024-01-08T15:19:23",
+            "page_number": 1,
+            "parent_id": "f0420d053deb6e18a4ce13c1eb55c62d"
+        },
+        "text": "Document.metadata_template -> default = \"{key}: {value}\"",
+        "type": "ListItem"
+    },
+    {
+        "element_id": "dfe4ffc726f304b426638e8ca2c96725",
+        "metadata": {
+            "file_directory": "/Users/sasha/github/LlamaIndex/llama_index/docs/module_guides/loading/documents_and_nodes",
+            "filename": "usage_documents.md",
+            "filetype": "text/markdown",
+            "languages": [
+                "eng"
+            ],
+            "last_modified": "2024-01-08T15:19:23",
+            "page_number": 1,
+            "parent_id": "f0420d053deb6e18a4ce13c1eb55c62d"
+        },
+        "text": "This attribute controls how each key/value pair in your metadata is formatted. The two variables key and value string keys are required.",
+        "type": "NarrativeText"
+    },
+    {
+        "element_id": "aca8ab47c28d0d32cc74d17ec703ff07",
+        "metadata": {
+            "file_directory": "/Users/sasha/github/LlamaIndex/llama_index/docs/module_guides/loading/documents_and_nodes",
+            "filename": "usage_documents.md",
+            "filetype": "text/markdown",
+            "languages": [
+                "eng"
+            ],
+            "last_modified": "2024-01-08T15:19:23",
+            "page_number": 1,
+            "parent_id": "f0420d053deb6e18a4ce13c1eb55c62d"
+        },
+        "text": "Document.text_template -> default = {metadata_str}\\n\\n{content}",
+        "type": "ListItem"
+    },
+    {
+        "element_id": "ba887056421d41969b78f394ced38fff",
+        "metadata": {
+            "file_directory": "/Users/sasha/github/LlamaIndex/llama_index/docs/module_guides/loading/documents_and_nodes",
+            "filename": "usage_documents.md",
+            "filetype": "text/markdown",
+            "languages": [
+                "eng"
+            ],
+            "last_modified": "2024-01-08T15:19:23",
+            "page_number": 1,
+            "parent_id": "f0420d053deb6e18a4ce13c1eb55c62d"
+        },
+        "text": "Once your metadata is converted into a string using metadata_seperator and metadata_template, this templates controls what that metadata looks like when joined with the text content of your document/node. The metadata and content string keys are required.",
+        "type": "NarrativeText"
+    },
+    {
+        "element_id": "8e76a94ac8320d515375e625bef18292",
+        "metadata": {
+            "file_directory": "/Users/sasha/github/LlamaIndex/llama_index/docs/module_guides/loading/documents_and_nodes",
+            "filename": "usage_documents.md",
+            "filetype": "text/markdown",
+            "languages": [
+                "eng"
+            ],
+            "last_modified": "2024-01-08T15:19:23",
+            "page_number": 1
+        },
+        "text": "Summary",
+        "type": "Title"
+    },
+    {
+        "element_id": "ae77a22c1cb5564d018ea5a4a1faa272",
+        "metadata": {
+            "file_directory": "/Users/sasha/github/LlamaIndex/llama_index/docs/module_guides/loading/documents_and_nodes",
+            "filename": "usage_documents.md",
+            "filetype": "text/markdown",
+            "languages": [
+                "eng"
+            ],
+            "last_modified": "2024-01-08T15:19:23",
+            "page_number": 1,
+            "parent_id": "8e76a94ac8320d515375e625bef18292"
+        },
+        "text": "Knowing all this, let's create a short example using all this power:",
+        "type": "NarrativeText"
+    },
+    {
+        "element_id": "f186601a70c7b69471db16b3aa2a1994",
+        "metadata": {
+            "file_directory": "/Users/sasha/github/LlamaIndex/llama_index/docs/module_guides/loading/documents_and_nodes",
+            "filename": "usage_documents.md",
+            "filetype": "text/markdown",
+            "languages": [
+                "eng"
+            ],
+            "last_modified": "2024-01-08T15:19:23",
+            "page_number": 1
+        },
+        "text": "```python\nfrom llama_index import Document\nfrom llama_index.schema import MetadataMode",
+        "type": "Title"
+    },
+    {
+        "element_id": "1b556266de936732660befdadf654d51",
+        "metadata": {
+            "file_directory": "/Users/sasha/github/LlamaIndex/llama_index/docs/module_guides/loading/documents_and_nodes",
+            "filename": "usage_documents.md",
+            "filetype": "text/markdown",
+            "languages": [
+                "eng"
+            ],
+            "last_modified": "2024-01-08T15:19:23",
+            "page_number": 1,
+            "parent_id": "f186601a70c7b69471db16b3aa2a1994"
+        },
+        "text": "document = Document(\n    text=\"This is a super-customized document\",\n    metadata={\n        \"file_name\": \"super_secret_document.txt\",\n        \"category\": \"finance\",\n        \"author\": \"LlamaIndex\",\n    },\n    excluded_llm_metadata_keys=[\"file_name\"],\n    metadata_seperator=\"::\",\n    metadata_template=\"{key}=>{value}\",\n    text_template=\"Metadata: {metadata_str}\\n-----\\nContent: {content}\",\n)",
+        "type": "NarrativeText"
+    },
+    {
+        "element_id": "20e641b3e8f6305a100864d5229dfd7e",
+        "metadata": {
+            "file_directory": "/Users/sasha/github/LlamaIndex/llama_index/docs/module_guides/loading/documents_and_nodes",
+            "filename": "usage_documents.md",
+            "filetype": "text/markdown",
+            "languages": [
+                "eng"
+            ],
+            "last_modified": "2024-01-08T15:19:23",
+            "page_number": 1,
+            "parent_id": "f186601a70c7b69471db16b3aa2a1994"
+        },
+        "text": "print(\n    \"The LLM sees this: \\n\",\n    document.get_content(metadata_mode=MetadataMode.LLM),\n)\nprint(\n    \"The Embedding model sees this: \\n\",\n    document.get_content(metadata_mode=MetadataMode.EMBED),\n)\n```",
+        "type": "NarrativeText"
+    },
+    {
+        "element_id": "c108046e1d328461faf6beba0d92440e",
+        "metadata": {
+            "file_directory": "/Users/sasha/github/LlamaIndex/llama_index/docs/module_guides/loading/documents_and_nodes",
+            "filename": "usage_documents.md",
+            "filetype": "text/markdown",
+            "languages": [
+                "eng"
+            ],
+            "last_modified": "2024-01-08T15:19:23",
+            "page_number": 1
+        },
+        "text": "Advanced - Automatic Metadata Extraction",
+        "type": "Title"
+    },
+    {
+        "element_id": "0a029e589f5ec40d8f5b40fd62da2e7d",
+        "metadata": {
+            "file_directory": "/Users/sasha/github/LlamaIndex/llama_index/docs/module_guides/loading/documents_and_nodes",
+            "filename": "usage_documents.md",
+            "filetype": "text/markdown",
+            "languages": [
+                "eng"
+            ],
+            "last_modified": "2024-01-08T15:19:23",
+            "page_number": 1,
+            "parent_id": "c108046e1d328461faf6beba0d92440e"
+        },
+        "text": "We have initial examples of using LLMs themselves to perform metadata extraction.",
+        "type": "NarrativeText"
+    },
+    {
+        "element_id": "d44ab7f12f35a6588c8ee8401efeb3ae",
+        "metadata": {
+            "file_directory": "/Users/sasha/github/LlamaIndex/llama_index/docs/module_guides/loading/documents_and_nodes",
+            "filename": "usage_documents.md",
+            "filetype": "text/markdown",
+            "languages": [
+                "eng"
+            ],
+            "last_modified": "2024-01-08T15:19:23",
+            "page_number": 1,
+            "parent_id": "c108046e1d328461faf6beba0d92440e"
+        },
+        "text": "Take a look here!",
+        "type": "NarrativeText"
+    },
+    {
+        "element_id": "d15a9a37006d700c2b34e01372829662",
+        "metadata": {
+            "file_directory": "/Users/sasha/github/LlamaIndex/llama_index/docs/module_guides/loading/documents_and_nodes",
+            "filename": "usage_documents.md",
+            "filetype": "text/markdown",
+            "languages": [
+                "eng"
+            ],
+            "last_modified": "2024-01-08T15:19:23",
+            "page_number": 1
+        },
+        "text": "```{toctree}",
+        "type": "Title"
+    },
+    {
+        "element_id": "3057a8f8a8cc9bd4bc2634f7927326dc",
+        "metadata": {
+            "file_directory": "/Users/sasha/github/LlamaIndex/llama_index/docs/module_guides/loading/documents_and_nodes",
+            "filename": "usage_documents.md",
+            "filetype": "text/markdown",
+            "languages": [
+                "eng"
+            ],
+            "last_modified": "2024-01-08T15:19:23",
+            "page_number": 1
+        },
+        "text": "maxdepth: 1",
+        "type": "Title"
+    },
+    {
+        "element_id": "d87ce8e2bcef67bebbe578c84893de32",
+        "metadata": {
+            "file_directory": "/Users/sasha/github/LlamaIndex/llama_index/docs/module_guides/loading/documents_and_nodes",
+            "filename": "usage_documents.md",
+            "filetype": "text/markdown",
+            "languages": [
+                "eng"
+            ],
+            "last_modified": "2024-01-08T15:19:23",
+            "page_number": 1
+        },
+        "text": "/module_guides/loading/documents_and_nodes/usage_metadata_extractor.md\n```",
+        "type": "Title"
+    }
+]

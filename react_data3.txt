@@ -1,0 +1,51 @@
+Published as a conference paper at ICLR 2023
+appear sparsely in the most relevant positions of a trajectory, so we let the language model decide the
+asynchronous occurrence of thoughts and actions for itself.
+Since decision making and reasoning capabilities are integrated into a large language model, ReAct
+enjoys several unique features: A) Intuitive and easy to design : Designing ReAct prompts is
+straightforward as human annotators just type down their thoughts in language on top of their actions
+taken. No ad-hoc format choice, thought design, or example selection is used in this paper. We detail
+prompt design for each task in Sections 3 and 4. B) General and ﬂexible : Due to the ﬂexible thought
+space and thought-action occurrence format, ReAct works for diverse tasks with distinct action
+spaces and reasoning needs, including but not limited to QA, fact veriﬁcation, text game, and web
+navigation. C) Performant and robust :ReAct shows strong generalization to new task instances
+while learning solely from one to six in-context examples, consistently outperforming baselines with
+only reasoning or acting across different domains. We also show in Section 3 additional beneﬁts
+when ﬁnetuning is enabled, and in Section 4 how ReAct performance is robust to prompt selections.
+D) Human aligned and controllable :ReAct promises an interpretable sequential decision making
+and reasoning process where humans can easily inspect reasoning and factual correctness. Moreover,
+humans can also control or correct the agent behavior on the go by thought editing, as shown in
+Figure 5 in Section 4.
+3 K NOWLEDGE -INTENSIVE REASONING TASKS
+We begin with knowledge-intensive reasoning tasks like multi-hop question answering and fact
+veriﬁcation. As shown in Figure 1(1d), by interacting with a Wikipedia API, ReAct is able to
+retrieve information to support reasoning, while also use reasoning to target what to retrieve next,
+demonstrating a synergy of reasoning and acting.
+3.1 S ETUP
+Domains We consider two datasets challenging knowledge retrieval and reasoning: (1) Hot-
+PotQA (Yang et al., 2018), a multi-hop question answering benchmark that requires reasoning
+over two or more Wikipedia passages, and (2) FEVER (Thorne et al., 2018), a fact veriﬁcation
+benchmark where each claim is annotated SUPPORTS, REFUTES, or NOT ENOUGH INFO, based
+on if there exists a Wikipedia passage to verify the claim. In this work, we operate in a question-only
+setup for both tasks, where models only receive the question/claim as input without access to support
+paragraphs, and have to rely on their internal knowledge or retrieve knowledge via interacting with
+an external environment to support reasoning.
+Action Space We design a simple Wikipedia web API with three types of actions to support
+interactive information retrieval: (1) search [entity ], which returns the ﬁrst 5 sentences from
+the corresponding entity wiki page if it exists, or else suggests top-5 similar entities from the
+Wikipedia search engine, (2) lookup [string ], which would return the next sentence in the page
+containing string , simulating Ctrl+F functionality on the browser. (3) finish [answer ], which
+would ﬁnish the current task with answer . We note that this action space mostly can only retrieve a
+small part of a passage based on exact passage name, which is signiﬁcantly weaker than state-of-the-
+art lexical or neural retrievers. The purpose is to simulate how humans would interact with Wikipedia,
+and force models to retrieve via explicit reasoning in language.
+3.2 M ETHODS
+ReAct Prompting For HotpotQA and Fever, we randomly select 6 and 3 cases2from the training
+set and manually compose ReAct -format trajectories to use as few-shot exemplars in the prompts.
+Similar to Figure 1(d), each trajectory consists of multiple thought-action-observation steps (i.e. dense
+thought), where free-form thoughts are used for various purposes. Speciﬁcally, we use a combination
+of thoughts that decompose questions (“I need to search x, ﬁnd y, then ﬁnd z”), extract information
+from Wikipedia observations (“x was started in 1844”, “The paragraph does not tell x”), perform
+commonsense (“x is not y, so z must instead be...”) or arithmetic reasoning (“1844 < 1989”), guide
+2We ﬁnd more examples do not improve performance.
+4
